@@ -147,7 +147,7 @@ export default function ChatInterface() {
         <div className="flex items-center gap-3">
           <span
             className="text-2xl font-bold tracking-widest"
-            style={{ color: 'var(--gold)', fontFamily: 'serif', letterSpacing: '0.2em' }}
+            style={{ color: '#8B0000', fontFamily: 'serif', letterSpacing: '0.2em' }}
           >
             GACKT
           </span>
@@ -161,12 +161,12 @@ export default function ChatInterface() {
         <div className="flex items-center gap-3">
           <div
             className="w-2 h-2 rounded-full animate-pulse"
-            style={{ background: 'var(--gold)' }}
+            style={{ background: '#8B0000' }}
           />
           <Link
             href="/dashboard"
             className="rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition-colors"
-            style={{ borderColor: 'var(--gold-dim)', color: 'var(--gold)' }}
+            style={{ borderColor: '#5C0000', color: '#8B0000' }}
           >
             Dashboard
           </Link>
@@ -187,14 +187,14 @@ export default function ChatInterface() {
               style={
                 lang === l.code
                   ? {
-                      background: 'var(--gold)',
-                      color: '#000',
-                      border: '1px solid var(--gold)',
+                      background: '#8B0000',
+                      color: '#fff',
+                      border: '1px solid #8B0000',
                     }
                   : {
                       background: 'transparent',
-                      color: 'var(--gold)',
-                      border: '1px solid var(--gold-dim)',
+                      color: '#8B0000',
+                      border: '1px solid #5C0000',
                     }
               }
             >
@@ -214,7 +214,7 @@ export default function ChatInterface() {
             {msg.role === 'assistant' && (
               <div
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-none self-end mb-1"
-                style={{ background: 'var(--gold)', color: '#000' }}
+                style={{ background: '#8B0000', color: '#fff' }}
               >
                 G
               </div>
@@ -225,8 +225,8 @@ export default function ChatInterface() {
                 style={
                   msg.role === 'user'
                     ? {
-                        background: 'var(--gold)',
-                        color: '#000',
+                        background: '#8B0000',
+                        color: '#fff',
                         borderBottomRightRadius: '4px',
                       }
                     : {
@@ -251,7 +251,7 @@ export default function ChatInterface() {
           <div className="flex justify-start">
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-none self-end mb-1"
-              style={{ background: 'var(--gold)', color: '#000' }}
+              style={{ background: '#8B0000', color: '#fff' }}
             >
               G
             </div>
@@ -269,7 +269,7 @@ export default function ChatInterface() {
                     key={d}
                     className="w-1.5 h-1.5 rounded-full animate-bounce"
                     style={{
-                      background: 'var(--gold)',
+                      background: '#8B0000',
                       animationDelay: `${d * 0.15}s`,
                     }}
                   />
@@ -291,7 +291,7 @@ export default function ChatInterface() {
           style={{ background: 'var(--surface-alt)', border: '1px solid var(--border)' }}
           onFocus={() => {
             const el = document.activeElement?.closest('[data-input-wrap]') as HTMLElement
-            if (el) el.style.borderColor = 'var(--gold-dim)'
+            if (el) el.style.borderColor = '#5C0000'
           }}
         >
           <textarea
@@ -313,7 +313,7 @@ export default function ChatInterface() {
             className="flex-none w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
             style={
               input.trim() && !sending
-                ? { background: 'var(--gold)', color: '#000' }
+                ? { background: '#8B0000', color: '#fff' }
                 : { background: 'var(--border)', color: '#555' }
             }
             aria-label="送信"

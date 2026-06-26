@@ -36,7 +36,7 @@ export default function DashboardPage() {
     <div className="min-h-screen" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
         <header className="rounded-2xl border px-6 py-6" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <p className="text-sm uppercase tracking-[0.3em]" style={{ color: 'var(--gold)' }}>
+          <p className="text-sm uppercase tracking-[0.3em]" style={{ color: '#8B0000' }}>
             GACKT Dashboard
           </p>
           <h1 className="mt-2 text-3xl font-semibold">メッセージ統計</h1>
@@ -48,7 +48,7 @@ export default function DashboardPage() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border p-6" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
             <p className="text-sm" style={{ color: '#aaa' }}>合計メッセージ件数</p>
-            <p className="mt-3 text-4xl font-semibold" style={{ color: 'var(--gold)' }}>
+            <p className="mt-3 text-4xl font-semibold" style={{ color: '#8B0000' }}>
               {stats.totalMessages}
             </p>
           </div>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
           {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
             <div key={key} className="rounded-2xl border p-6" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
               <p className="text-sm" style={{ color: '#aaa' }}>{label}</p>
-              <p className="mt-3 text-3xl font-semibold" style={{ color: 'var(--gold)' }}>
+              <p className="mt-3 text-3xl font-semibold" style={{ color: '#8B0000' }}>
                 {stats.categories[key as keyof typeof stats.categories]}
               </p>
             </div>
@@ -70,7 +70,7 @@ export default function DashboardPage() {
               <div key={key} className="rounded-xl border p-4" style={{ background: 'var(--surface-alt)', borderColor: 'var(--border)' }}>
                 <div className="flex items-center justify-between">
                   <span>{label}</span>
-                  <span className="text-lg font-semibold" style={{ color: 'var(--gold)' }}>
+                  <span className="text-lg font-semibold" style={{ color: '#8B0000' }}>
                     {stats.languages[key as keyof typeof stats.languages]}
                   </span>
                 </div>
