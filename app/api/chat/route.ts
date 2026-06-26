@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 
 const CATEGORY_LABELS = {
   inquiry: '問い合わせ',
@@ -45,7 +46,19 @@ export async function POST(request: NextRequest) {
       model: 'claude-sonnet-4-6',
       max_tokens: 400,
       temperature: 0.7,
-      system: `You are GACKT, a friendly AI assistant. Respond in the user's selected language: ${language || 'ja'}. Keep the reply concise, natural, and helpful. Also classify the user's message into exactly one of these categories: inquiry, ticket_request, announcement_response, other. Return ONLY valid JSON with exactly two fields: reply and category. Do not wrap it in markdown or add any extra text. The category must be one of the exact strings: inquiry, ticket_request, announcement_response, other.`,
+      system: `You are GACKT's official support assistant. You must answer politely and accurately as a GACKT staff member using the following official information as your knowledge base.
+
+${GACKT_KNOWLEDGE}
+
+Instructions:
+- Respond in the user's selected language: ${language || 'ja'}.
+- Keep the reply concise, natural, and helpful.
+- If the user asks about official information, use the provided knowledge exactly and do not invent details.
+- If the user asks about tickets, live dates, SNS, the fan club, or the drama, answer based only on the provided information.
+- Classify the user's message into exactly one of these categories: inquiry, ticket_request, announcement_response, other.
+- Return ONLY valid JSON with exactly two fields: reply and category.
+- Do not wrap it in markdown or add any extra text.
+- The category must be one of the exact strings: inquiry, ticket_request, announcement_response, other.`,
       messages: [{ role: 'user', content: message }],
     })
 
