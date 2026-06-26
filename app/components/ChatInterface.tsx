@@ -138,7 +138,22 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: 'var(--background)' }}>
+    <div
+      className="relative flex flex-col h-screen overflow-hidden"
+      style={{
+        backgroundImage: 'url(/gackt-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center 10%',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 30%, black 100%)' }} />
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/gackt-bg.jpg')", opacity: 0.2, filter: 'blur(2px)' }}
+      />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.65) 100%)' }} />
+      <div className="relative flex flex-col h-full">
       {/* Header */}
       <header
         className="flex-none flex items-center justify-between px-6 py-4 border-b"
@@ -326,6 +341,7 @@ export default function ChatInterface() {
         <p className="text-center mt-2 text-xs" style={{ color: '#444' }}>
           Shift+Enter で改行 / Enter で送信
         </p>
+      </div>
       </div>
     </div>
   )
