@@ -2,12 +2,46 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 
+async function fetchKnowledgeBase() {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/knowledge`, {
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    return GACKT_KNOWLEDGE
+  }
+
+  const data = await response.json()
+  return typeof data.knowledge === 'string' && data.knowledge.trim()
+    ? `${GACKT_KNOWLEDGE}\n\n【公式サイト自動取得情報】\n${data.knowledge}`
+    : GACKT_KNOWLEDGE
+}
+
 const CATEGORY_LABELS = {
   inquiry: '問い合わせ',
   ticket_request: 'チケット希望',
   announcement_response: '告知反応',
+  complaint: 'クレーム',
   other: 'その他',
 } as const
+
+const COMPLAINT_KEYWORDS = [
+  '不満',
+  '怒り',
+  '苦情',
+  '批判',
+  '返金',
+  'キャンセル',
+  'refund',
+  'cancel',
+  'complaint',
+  'angry',
+  'dissatisfied',
+  'disappointed',
+  'terrible',
+  '不便',
+  '失望',
+]
 
 function parseResponsePayload(text: string) {
   const trimmed = text.trim()
@@ -24,6 +58,16 @@ function parseResponsePayload(text: string) {
   }
 }
 
+function isComplaintMessage(message: string) {
+  const normalized = message.toLowerCase()
+  return COMPLAINT_KEYWORDS.some(keyword => normalized.includes(keyword.toLowerCase()))
+}
+
+type ConversationHistoryItem = {
+  role: 'assistant' | 'user'
+  content: string
+}
+
 export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY
 
@@ -35,31 +79,54 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { message, language } = await request.json()
+    const payload = await request.json()
+    const { message, language, messages: historyMessages = [] } = payload
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'A message is required.' }, { status: 400 })
     }
 
+    const conversationHistory: ConversationHistoryItem[] = Array.isArray(historyMessages)
+      ? historyMessages
+          .filter((item: unknown): item is { role: string; text: string } => {
+            if (!item || typeof item !== 'object') return false
+            const candidate = item as { role?: unknown; text?: unknown }
+            return typeof candidate.role === 'string' && typeof candidate.text === 'string'
+          })
+          .map(item => ({
+            role: item.role === 'assistant' ? 'assistant' : 'user',
+            content: item.text,
+          }))
+      : []
+
+    const knowledgeBase = await fetchKnowledgeBase()
     const anthropic = new Anthropic({ apiKey })
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 400,
+      max_tokens: 1000,
       temperature: 0.7,
       system: `You are GACKT's official support assistant. You must answer politely and accurately as a GACKT staff member using the following official information as your knowledge base.
 
-${GACKT_KNOWLEDGE}
+${knowledgeBase}
 
 Instructions:
 - Respond in the user's selected language: ${language || 'ja'}.
 - Keep the reply concise, natural, and helpful.
+- Do not use Markdown tables or pipe-delimited table formatting. Respond using plain sentences or bullet points instead.
+- Use the conversation history to understand the ongoing context and avoid repeating the same reply.
 - If the user asks about official information, use the provided knowledge exactly and do not invent details.
 - If the user asks about tickets, live dates, SNS, the fan club, or the drama, answer based only on the provided information.
-- Classify the user's message into exactly one of these categories: inquiry, ticket_request, announcement_response, other.
+- If the message contains dissatisfaction, anger, complaints, criticism, refund requests, or cancellation requests, classify it as complaint and respond with a calm, apologetic message.
+- If the user is making a complaint or expressing dissatisfaction, follow this simple flow:
+  1. First, apologize and show empathy.
+  2. Then offer a concrete solution based on the issue (for example, ticket not received -> contact the purchase site's support window; defective goods -> use the official site inquiry form).
+  3. Finally, guide the user to the inquiry form at https://gackt.com.
+  Avoid repeating the same reply; adapt your response to the specific details of the user's complaint.
+- Classify the user's message into exactly one of these categories: inquiry, ticket_request, announcement_response, complaint, other.
 - Return ONLY valid JSON with exactly two fields: reply and category.
 - Do not wrap it in markdown or add any extra text.
-- The category must be one of the exact strings: inquiry, ticket_request, announcement_response, other.`,
-      messages: [{ role: 'user', content: message }],
+- The category must be one of the exact strings: inquiry, ticket_request, announcement_response, complaint, other.`,
+      messages: [...conversationHistory, { role: 'user', content: message }],
     })
 
     const responseText = response.content
