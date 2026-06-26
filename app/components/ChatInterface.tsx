@@ -35,6 +35,17 @@ const GREETINGS: Record<string, string> = {
   th: 'ยินดีต้อนรับสู่ GACKT AI. ถามฉันได้ทุกเรื่อง',
 }
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  ja: 'Japanese',
+  en: 'English',
+  'zh-TW': 'Traditional Chinese',
+  'zh-HK': 'Cantonese',
+  es: 'Spanish',
+  ko: 'Korean',
+  fr: 'French',
+  th: 'Thai',
+}
+
 interface Message {
   role: 'user' | 'assistant'
   text: string
@@ -68,12 +79,28 @@ export default function ChatInterface() {
     setInput('')
     setSending(true)
 
-    await new Promise(r => setTimeout(r, 800))
-    setMessages(prev => [
-      ...prev,
-      { role: 'assistant', text: '（AIの返答がここに表示されます）' },
-    ])
-    setSending(false)
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: text, language: lang }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get a reply from the AI.')
+      }
+
+      setMessages(prev => [...prev, { role: 'assistant', text: data.reply }])
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to contact the AI right now.'
+      setMessages(prev => [...prev, { role: 'assistant', text: message }])
+    } finally {
+      setSending(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
