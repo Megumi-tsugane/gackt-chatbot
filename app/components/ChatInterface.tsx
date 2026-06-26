@@ -1,6 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
+import { incrementStats } from '../lib/stats'
 
 const LANGUAGES = [
   { code: 'ja', label: '日本語' },
@@ -96,6 +98,17 @@ export default function ChatInterface() {
         throw new Error(data.error || 'Failed to get a reply from the AI.')
       }
 
+      incrementStats({
+        category: data.categoryLabel === 'チケット希望'
+          ? 'ticket_request'
+          : data.categoryLabel === '問い合わせ'
+            ? 'inquiry'
+            : data.categoryLabel === '告知反応'
+              ? 'announcement_response'
+              : 'other',
+        language: lang as 'ja' | 'en' | 'zh-TW' | 'zh-HK' | 'es' | 'ko' | 'fr' | 'th',
+      })
+
       setMessages(prev => {
         const updated = prev.map((msg, index) =>
           index === userMessageIndex ? { ...msg, categoryLabel: data.categoryLabel } : msg,
@@ -145,10 +158,19 @@ export default function ChatInterface() {
             AI Chat
           </span>
         </div>
-        <div
-          className="w-2 h-2 rounded-full animate-pulse"
-          style={{ background: 'var(--gold)' }}
-        />
+        <div className="flex items-center gap-3">
+          <div
+            className="w-2 h-2 rounded-full animate-pulse"
+            style={{ background: 'var(--gold)' }}
+          />
+          <Link
+            href="/dashboard"
+            className="rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition-colors"
+            style={{ borderColor: 'var(--gold-dim)', color: 'var(--gold)' }}
+          >
+            Dashboard
+          </Link>
+        </div>
       </header>
 
       {/* Language Selector */}
