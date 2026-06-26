@@ -2,25 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 
-async function fetchKnowledgeBase() {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/knowledge`, {
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      return GACKT_KNOWLEDGE
-    }
-
-    const data = await response.json()
-    return typeof data.knowledge === 'string' && data.knowledge.trim()
-      ? `${GACKT_KNOWLEDGE}\n\n【公式サイト自動取得情報】\n${data.knowledge}`
-      : GACKT_KNOWLEDGE
-  } catch {
-    return GACKT_KNOWLEDGE
-  }
-}
-
 const CATEGORY_LABELS = {
   inquiry: '問い合わせ',
   ticket_request: 'チケット希望',
@@ -103,7 +84,6 @@ export async function POST(request: NextRequest) {
           }))
       : []
 
-    const knowledgeBase = await fetchKnowledgeBase()
     const anthropic = new Anthropic({ apiKey })
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -111,7 +91,7 @@ export async function POST(request: NextRequest) {
       temperature: 0.7,
       system: `You are GACKT's official support assistant. You must answer politely and accurately as a GACKT staff member using the following official information as your knowledge base.
 
-${knowledgeBase}
+${GACKT_KNOWLEDGE}
 
 Instructions:
 - Respond in the user's selected language: ${language || 'ja'}.
