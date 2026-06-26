@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 
 const KNOWLEDGE_URLS = [
   'https://gackt.com/discography',
@@ -8,6 +9,7 @@ const KNOWLEDGE_URLS = [
 ]
 const NEWS_LIST_URL = 'https://gackt.com/contents/news'
 const CACHE_TTL_MS = 60 * 60 * 1000
+const FETCH_TIMEOUT_MS = 5000
 
 type CachedKnowledge = {
   expiresAt: number
@@ -38,19 +40,30 @@ function stripHtml(html: string) {
 }
 
 async function fetchPageText(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      Accept: 'text/html,application/xhtml+xml',
-    },
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status}`)
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        Accept: 'text/html,application/xhtml+xml',
+      },
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}: ${response.status}`)
+    }
+
+    const html = await response.text()
+    return stripHtml(html)
+  } catch (error) {
+    console.warn(`Knowledge fetch failed for ${url}:`, error)
+    return ''
+  } finally {
+    clearTimeout(timeoutId)
   }
-
-  const html = await response.text()
-  return stripHtml(html)
 }
 
 function resolveUrl(href: string, baseUrl: string) {
@@ -111,20 +124,27 @@ export async function GET() {
     }
 
     const payload = await buildKnowledgePayload()
-    knowledgeCache = {
-      expiresAt: now + CACHE_TTL_MS,
-      payload,
+    const fallbackKnowledge = payload.knowledge.trim() ? payload.knowledge : GACKT_KNOWLEDGE
+
+    const resultPayload = {
+      sources: payload.sources,
+      knowledge: fallbackKnowledge,
     }
 
-    return NextResponse.json(payload)
+    knowledgeCache = {
+      expiresAt: now + CACHE_TTL_MS,
+      payload: resultPayload,
+    }
+
+    return NextResponse.json(resultPayload)
   } catch (error) {
     console.error('Knowledge fetch error:', error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Failed to fetch knowledge.',
-        knowledge: '',
+        knowledge: GACKT_KNOWLEDGE,
       },
-      { status: 500 },
+      { status: 200 },
     )
   }
 }
