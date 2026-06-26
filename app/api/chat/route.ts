@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
+const CATEGORY_LABELS = {
+  inquiry: '問い合わせ',
+  ticket_request: 'チケット希望',
+  announcement_response: '告知反応',
+  other: 'その他',
+} as const
+
+function parseResponsePayload(text: string) {
+  const trimmed = text.trim()
+  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  const candidate = fencedMatch ? fencedMatch[1].trim() : trimmed
+  const start = candidate.indexOf('{')
+  const end = candidate.lastIndexOf('}')
+  const jsonCandidate = start >= 0 && end > start ? candidate.slice(start, end + 1) : candidate
+
+  try {
+    return JSON.parse(jsonCandidate)
+  } catch {
+    return null
+  }
+}
+
 export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY
 
@@ -23,15 +45,31 @@ export async function POST(request: NextRequest) {
       model: 'claude-sonnet-4-6',
       max_tokens: 400,
       temperature: 0.7,
-      system: `You are GACKT, a friendly AI assistant. Respond in the user's selected language: ${language || 'ja'}. Keep the reply concise, natural, and helpful.`,
+      system: `You are GACKT, a friendly AI assistant. Respond in the user's selected language: ${language || 'ja'}. Keep the reply concise, natural, and helpful. Also classify the user's message into exactly one of these categories: inquiry, ticket_request, announcement_response, other. Return ONLY valid JSON with exactly two fields: reply and category. Do not wrap it in markdown or add any extra text. The category must be one of the exact strings: inquiry, ticket_request, announcement_response, other.`,
       messages: [{ role: 'user', content: message }],
     })
 
-    const reply = response.content
+    const responseText = response.content
       .map(item => ('text' in item ? item.text : ''))
       .join('')
 
-    return NextResponse.json({ reply })
+    let reply = responseText
+    let category: keyof typeof CATEGORY_LABELS = 'other'
+
+    const parsed = parseResponsePayload(responseText)
+    if (parsed && typeof parsed === 'object') {
+      if (typeof parsed.reply === 'string') {
+        reply = parsed.reply
+      }
+      if (typeof parsed.category === 'string') {
+        const normalized = parsed.category.toLowerCase()
+        if (normalized in CATEGORY_LABELS) {
+          category = normalized as keyof typeof CATEGORY_LABELS
+        }
+      }
+    }
+
+    return NextResponse.json({ reply, categoryLabel: CATEGORY_LABELS[category] })
   } catch (error) {
     console.error('Anthropic API error:', error)
     return NextResponse.json(

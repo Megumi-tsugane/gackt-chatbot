@@ -49,6 +49,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
 interface Message {
   role: 'user' | 'assistant'
   text: string
+  categoryLabel?: string
 }
 
 export default function ChatInterface() {
@@ -75,6 +76,7 @@ export default function ChatInterface() {
     const text = input.trim()
     if (!text || sending) return
 
+    const userMessageIndex = messages.length
     setMessages(prev => [...prev, { role: 'user', text }])
     setInput('')
     setSending(true)
@@ -94,7 +96,12 @@ export default function ChatInterface() {
         throw new Error(data.error || 'Failed to get a reply from the AI.')
       }
 
-      setMessages(prev => [...prev, { role: 'assistant', text: data.reply }])
+      setMessages(prev => {
+        const updated = prev.map((msg, index) =>
+          index === userMessageIndex ? { ...msg, categoryLabel: data.categoryLabel } : msg,
+        )
+        return [...updated, { role: 'assistant', text: data.reply }]
+      })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to contact the AI right now.'
       setMessages(prev => [...prev, { role: 'assistant', text: message }])
@@ -190,24 +197,31 @@ export default function ChatInterface() {
                 G
               </div>
             )}
-            <div
-              className="max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed"
-              style={
-                msg.role === 'user'
-                  ? {
-                      background: 'var(--gold)',
-                      color: '#000',
-                      borderBottomRightRadius: '4px',
-                    }
-                  : {
-                      background: 'var(--surface-alt)',
-                      color: 'var(--foreground)',
-                      border: '1px solid var(--border)',
-                      borderBottomLeftRadius: '4px',
-                    }
-              }
-            >
-              {msg.text}
+            <div className="flex flex-col max-w-[75%]">
+              <div
+                className="px-4 py-3 rounded-2xl text-sm leading-relaxed"
+                style={
+                  msg.role === 'user'
+                    ? {
+                        background: 'var(--gold)',
+                        color: '#000',
+                        borderBottomRightRadius: '4px',
+                      }
+                    : {
+                        background: 'var(--surface-alt)',
+                        color: 'var(--foreground)',
+                        border: '1px solid var(--border)',
+                        borderBottomLeftRadius: '4px',
+                      }
+                }
+              >
+                {msg.text}
+              </div>
+              {msg.role === 'user' && msg.categoryLabel && (
+                <span className="mt-1 text-[10px] uppercase tracking-wide self-end" style={{ color: '#888' }}>
+                  {msg.categoryLabel}
+                </span>
+              )}
             </div>
           </div>
         ))}
