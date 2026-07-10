@@ -62,7 +62,7 @@ function renderText(text: string) {
           return (
                   <span key={lineIndex}>
                     {parts.map((part, i) =>
-                              URL_REGEX.test(part) ? (
+                              /^https?:\/\//.test(part) ? (
                                             <a
                                                             key={i}
                                                             href={part}
@@ -130,10 +130,10 @@ export default function ChatInterface() {
                                                                                     category: data.categoryLabel === 'チケット希望'
                                                                                                 ? 'ticket_request'
                                                                                                 : data.categoryLabel === '問い合わせ'
-                                                                                                  ? 'inquiry'
-                                                                                                  : data.categoryLabel === '告知反応'
-                                                                                                    ? 'announcement_response'
-                                                                                                    : 'other',
+                                                                                                ? 'inquiry'
+                                                                                                : data.categoryLabel === '告知反応'
+                                                                                                ? 'announcement_response'
+                                                                                                : 'other',
                                                                                     language: lang as 'ja' | 'en' | 'zh-TW' | 'zh-HK' | 'es' | 'ko' | 'fr' | 'th',
                                                                           })
                                                                             
@@ -183,195 +183,194 @@ export default function ChatInterface() {
                                                             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.65) 100%)' }} />
                                                             <div className="relative flex flex-col h-full">
                                                               {/* Header */}
-                                                                  <header
-                                                                            className="flex-none flex items-center justify-between px-6 py-4 border-b"
-                                                                            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-                                                                          >
-                                                                          <div className="flex items-center gap-3">
-                                                                                    <span
-                                                                                                  className="text-2xl font-bold tracking-widest"
-                                                                                                  style={{ color: '#8B0000', fontFamily: 'serif', letterSpacing: '0.2em' }}
-                                                                                                >
-                                                                                                GACKT
-                                                                                    </span>span>
-                                                                                    <span
-                                                                                                  className="text-xs tracking-widest uppercase"
-                                                                                                  style={{ color: '#666', letterSpacing: '0.15em' }}
-                                                                                                >
-                                                                                                AI Chat
-                                                                                    </span>span>
-                                                                          </div>div>
-                                                                          <div className="flex items-center gap-3">
-                                                                                    <div
-                                                                                                  className="w-2 h-2 rounded-full animate-pulse"
-                                                                                                  style={{ background: '#8B0000' }}
-                                                                                                />
-                                                                                    <Link
-                                                                                                  href="/dashboard"
-                                                                                                  className="rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition-colors"
-                                                                                                  style={{ borderColor: '#5C0000', color: '#8B0000' }}
-                                                                                                >
-                                                                                                Dashboard
-                                                                                    </Link>Link>
-                                                                          </div>div>
-                                                                  </header>header>
+                                                                    <header
+                                                                                className="flex-none flex items-center justify-between px-6 py-4 border-b"
+                                                                                style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+                                                                              >
+                                                                              <div className="flex items-center gap-3">
+                                                                                          <span
+                                                                                                          className="text-2xl font-bold tracking-widest"
+                                                                                                          style={{ color: '#8B0000', fontFamily: 'serif', letterSpacing: '0.2em' }}
+                                                                                                        >
+                                                                                                        GACKT
+                                                                                            </span>span>
+                                                                                          <span
+                                                                                                          className="text-xs tracking-widest uppercase"
+                                                                                                          style={{ color: '#666', letterSpacing: '0.15em' }}
+                                                                                                        >
+                                                                                                        AI Chat
+                                                                                            </span>span>
+                                                                              </div>div>
+                                                                              <div className="flex items-center gap-3">
+                                                                                          <div
+                                                                                                          className="w-2 h-2 rounded-full animate-pulse"
+                                                                                                          style={{ background: '#8B0000' }}
+                                                                                                        />
+                                                                                          <Link
+                                                                                                          href="/dashboard"
+                                                                                                          className="rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition-colors"
+                                                                                                          style={{ borderColor: '#5C0000', color: '#8B0000' }}
+                                                                                                        >
+                                                                                                        Dashboard
+                                                                                            </Link>Link>
+                                                                              </div>div>
+                                                                    </header>header>
                                                             
                                                               {/* Language Selector */}
-                                                                  <div
-                                                                            className="flex-none px-4 py-3 border-b overflow-x-auto"
-                                                                            style={{ borderColor: 'var(--border)', background: 'var(--surface-alt)' }}
-                                                                          >
-                                                                          <div className="flex gap-2 min-w-max mx-auto w-fit">
-                                                                            {LANGUAGES.map(l => (
-                                                                                        <button
-                                                                                                        key={l.code}
-                                                                                                        onClick={() => handleLangChange(l.code)}
-                                                                                                        className="px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 whitespace-nowrap"
-                                                                                                        style={
-                                                                                                                          lang === l.code
-                                                                                                                            ? {
-                                                                                                                                                    background: '#8B0000',
-                                                                                                                                                    color: '#fff',
-                                                                                                                                                    border: '1px solid #8B0000',
-                                                                                                                              }
-                                                                                                                            : {
-                                                                                                                                                    background: 'transparent',
-                                                                                                                                                    color: '#8B0000',
-                                                                                                                                                    border: '1px solid #5C0000',
-                                                                                                                              }
-                                                                                                          }
-                                                                                                      >
-                                                                                          {l.label}
-                                                                                          </button>button>
-                                                                                      ))}
-                                                                          </div>div>
-                                                                  </div>div>
+                                                                    <div
+                                                                                className="flex-none px-4 py-3 border-b overflow-x-auto"
+                                                                                style={{ borderColor: 'var(--border)', background: 'var(--surface-alt)' }}
+                                                                              >
+                                                                              <div className="flex gap-2 min-w-max mx-auto w-fit">
+                                                                                {LANGUAGES.map(l => (
+                                                                                              <button
+                                                                                                                key={l.code}
+                                                                                                                onClick={() => handleLangChange(l.code)}
+                                                                                                                className="px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 whitespace-nowrap"
+                                                                                                                style={
+                                                                                                                                    lang === l.code
+                                                                                                                                      ? {
+                                                                                                                                                                background: '#8B0000',
+                                                                                                                                                                color: '#fff',
+                                                                                                                                                                border: '1px solid #8B0000',
+                                                                                                                                        }
+                                                                                                                                      : {
+                                                                                                                                                                background: 'transparent',
+                                                                                                                                                                color: '#8B0000',
+                                                                                                                                                                border: '1px solid #5C0000',
+                                                                                                                                        }
+                                                                                                                  }
+                                                                                                              >
+                                                                                                {l.label}
+                                                                                                </button>button>
+                                                                                            ))}
+                                                                              </div>div>
+                                                                    </div>div>
                                                             
                                                               {/* Messages */}
-                                                                  <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-                                                                    {messages.map((msg, i) => (
-                                                                        <div
-                                                                                      key={i}
-                                                                                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                                                                                    >
-                                                                          {msg.role === 'assistant' && (
-                                                                                                    <div
-                                                                                                                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-none self-end mb-1"
-                                                                                                                      style={{ background: '#8B0000', color: '#fff' }}
-                                                                                                                    >
-                                                                                                                    G
-                                                                                                      </div>div>
-                                                                                    )}
-                                                                                    <div className="flex flex-col max-w-[75%]">
-                                                                                                  <div
-                                                                                                                    className="px-4 py-3 rounded-2xl text-sm leading-relaxed"
-                                                                                                                    style={
-                                                                                                                                        msg.role === 'user'
-                                                                                                                                          ? {
-                                                                                                                                                                    background: '#8B0000',
-                                                                                                                                                                    color: '#fff',
-                                                                                                                                                                    borderBottomRightRadius: '4px',
-                                                                                                                                            }
-                                                                                                                                          : {
-                                                                                                                                                                    background: 'var(--surface-alt)',
-                                                                                                                                                                    color: 'var(--foreground)',
-                                                                                                                                                                    border: '1px solid var(--border)',
-                                                                                                                                                                    borderBottomLeftRadius: '4px',
-                                                                                                                                            }
-                                                                                                                      }
-                                                                                                                  >
-                                                                                                    {renderText(msg.text)}
-                                                                                                    </div>div>
-                                                                                      {msg.role === 'user' && msg.categoryLabel && (
-                                                                                                      <span className="mt-1 text-[10px] uppercase tracking-wide self-end" style={{ color: '#888' }}>
-                                                                                                        {msg.categoryLabel}
-                                                                                                        </span>span>
-                                                                                                  )}
-                                                                                    </div>div>
-                                                                        </div>div>
-                                                                      ))}
-                                                                    {sending && (
-                                                                        <div className="flex justify-start">
-                                                                                    <div
-                                                                                                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-none self-end mb-1"
-                                                                                                    style={{ background: '#8B0000', color: '#fff' }}
-                                                                                                  >
-                                                                                                  G
-                                                                                    </div>div>
-                                                                                    <div
-                                                                                                    className="px-4 py-3 rounded-2xl"
-                                                                                                    style={{
-                                                                                                                      background: 'var(--surface-alt)',
-                                                                                                                      border: '1px solid var(--border)',
-                                                                                                                      borderBottomLeftRadius: '4px',
-                                                                                                      }}
-                                                                                                  >
-                                                                                                  <span className="flex gap-1 items-center">
-                                                                                                    {[0, 1, 2].map(d => (
-                                                                                                                      <span
-                                                                                                                                            key={d}
-                                                                                                                                            className="w-1.5 h-1.5 rounded-full animate-bounce"
-                                                                                                                                            style={{
-                                                                                                                                                                    background: '#8B0000',
-                                                                                                                                                                    animationDelay: `${d * 0.15}s`,
-                                                                                                                                              }}
-                                                                                                                                          />
-                                                                                                                    ))}
-                                                                                                    </span>span>
-                                                                                    </div>div>
-                                                                        </div>div>
-                                                                          )}
-                                                                          <div ref={messagesEndRef} />
-                                                                  </div>div>
+                                                                    <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+                                                                      {messages.map((msg, i) => (
+                                                                          <div
+                                                                                          key={i}
+                                                                                          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                                                                                        >
+                                                                            {msg.role === 'assistant' && (
+                                                                                                          <div
+                                                                                                                              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-none self-end mb-1"
+                                                                                                                              style={{ background: '#8B0000', color: '#fff' }}
+                                                                                                                            >
+                                                                                                                            G
+                                                                                                            </div>div>
+                                                                                        )}
+                                                                                        <div className="flex flex-col max-w-[75%]">
+                                                                                                        <div
+                                                                                                                            className="px-4 py-3 rounded-2xl text-sm leading-relaxed"
+                                                                                                                            style={
+                                                                                                                                                  msg.role === 'user'
+                                                                                                                                                    ? {
+                                                                                                                                                                                background: '#8B0000',
+                                                                                                                                                                                color: '#fff',
+                                                                                                                                                                                borderBottomRightRadius: '4px',
+                                                                                                                                                      }
+                                                                                                                                                    : {
+                                                                                                                                                                                background: 'var(--surface-alt)',
+                                                                                                                                                                                color: 'var(--foreground)',
+                                                                                                                                                                                border: '1px solid var(--border)',
+                                                                                                                                                                                borderBottomLeftRadius: '4px',
+                                                                                                                                                      }
+                                                                                                                              }
+                                                                                                                          >
+                                                                                                          {renderText(msg.text)}
+                                                                                                          </div>div>
+                                                                                          {msg.role === 'user' && msg.categoryLabel && (
+                                                                                                            <span className="mt-1 text-[10px] uppercase tracking-wide self-end" style={{ color: '#888' }}>
+                                                                                                              {msg.categoryLabel}
+                                                                                                              </span>span>
+                                                                                                        )}
+                                                                                          </div>div>
+                                                                          </div>div>
+                                                                        ))}
+                                                                      {sending && (
+                                                                          <div className="flex justify-start">
+                                                                                        <div
+                                                                                                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-none self-end mb-1"
+                                                                                                          style={{ background: '#8B0000', color: '#fff' }}
+                                                                                                        >
+                                                                                                        G
+                                                                                          </div>div>
+                                                                                        <div
+                                                                                                          className="px-4 py-3 rounded-2xl"
+                                                                                                          style={{
+                                                                                                                              background: 'var(--surface-alt)',
+                                                                                                                              border: '1px solid var(--border)',
+                                                                                                                              borderBottomLeftRadius: '4px',
+                                                                                                            }}
+                                                                                                        >
+                                                                                                        <span className="flex gap-1 items-center">
+                                                                                                          {[0, 1, 2].map(d => (
+                                                                                                                              <span
+                                                                                                                                                      key={d}
+                                                                                                                                                      className="w-1.5 h-1.5 rounded-full animate-bounce"
+                                                                                                                                                      style={{
+                                                                                                                                                                                background: '#8B0000',
+                                                                                                                                                                                animationDelay: `${d * 0.15}s`,
+                                                                                                                                                        }}
+                                                                                                                                                    />
+                                                                                                                            ))}
+                                                                                                          </span>span>
+                                                                                          </div>div>
+                                                                          </div>div>
+                                                                              )}
+                                                                              <div ref={messagesEndRef} />
+                                                                    </div>div>
                                                             
                                                               {/* Input Area */}
-                                                                  <div
-                                                                            className="flex-none p-4 border-t"
-                                                                            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-                                                                          >
-                                                                          <div
-                                                                                      className="flex items-end gap-3 rounded-2xl px-4 py-3"
-                                                                                      style={{ background: 'var(--surface-alt)', border: '1px solid var(--border)' }}
-                                                                                      onFocus={() => {
-                                                                                                    const el = document.activeElement?.closest('[data-input-wrap]') as HTMLElement
-                                                                                                                  if (el) el.style.borderColor = '#5C0000'
-                                                                                        }}
-                                                                                    >
-                                                                                    <textarea
-                                                                                                  ref={textareaRef}
-                                                                                                  rows={1}
-                                                                                                  value={input}
-                                                                                                  onChange={e => {
-                                                                                                                  setInput(e.target.value)
-                                                                                                                                  autoResize()
-                                                                                                    }}
-                                                                                                  onKeyDown={handleKeyDown}
-                                                                                                  placeholder={PLACEHOLDERS[lang]}
-                                                                                                  className="flex-1 resize-none bg-transparent outline-none text-sm leading-relaxed"
-                                                                                                  style={{ color: 'var(--foreground)', maxHeight: '120px' }}
-                                                                                                />
-                                                                                    <button
-                                                                                                  onClick={handleSend}
-                                                                                                  disabled={!input.trim() || sending}
-                                                                                                  className="flex-none w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
-                                                                                                  style={
-                                                                                                                  input.trim() && !sending
-                                                                                                                    ? { background: '#8B0000', color: '#fff' }
-                                                                                                                    : { background: 'var(--border)', color: '#555' }
-                                                                                                    }
-                                                                                                  aria-label="送信"
-                                                                                                >
-                                                                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                                                                                              <path d="M1.5 1.5l13 6.5-13 6.5V9.5l9-1.5-9-1.5V1.5z" />
-                                                                                                  </svg>svg>
-                                                                                    </button>button>
-                                                                          </div>div>
-                                                                          <p className="text-center mt-2 text-xs" style={{ color: '#444' }}>
-                                                                                    Shift+Enter で改行 / Enter で送信
-                                                                          </p>p>
-                                                                  </div>div>
+                                                                    <div
+                                                                                className="flex-none p-4 border-t"
+                                                                                style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+                                                                              >
+                                                                              <div
+                                                                                            className="flex items-end gap-3 rounded-2xl px-4 py-3"
+                                                                                            style={{ background: 'var(--surface-alt)', border: '1px solid var(--border)' }}
+                                                                                            onFocus={() => {
+                                                                                                            const el = document.activeElement?.closest('[data-input-wrap]') as HTMLElement
+                                                                                                                            if (el) el.style.borderColor = '#5C0000'
+                                                                                              }}
+                                                                                          >
+                                                                                          <textarea
+                                                                                                          ref={textareaRef}
+                                                                                                          rows={1}
+                                                                                                          value={input}
+                                                                                                          onChange={e => {
+                                                                                                                            setInput(e.target.value)
+                                                                                                                                              autoResize()
+                                                                                                            }}
+                                                                                                          onKeyDown={handleKeyDown}
+                                                                                                          placeholder={PLACEHOLDERS[lang]}
+                                                                                                          className="flex-1 resize-none bg-transparent outline-none text-sm leading-relaxed"
+                                                                                                          style={{ color: 'var(--foreground)', maxHeight: '120px' }}
+                                                                                                        />
+                                                                                          <button
+                                                                                                          onClick={handleSend}
+                                                                                                          disabled={!input.trim() || sending}
+                                                                                                          className="flex-none w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
+                                                                                                          style={
+                                                                                                                            input.trim() && !sending
+                                                                                                                              ? { background: '#8B0000', color: '#fff' }
+                                                                                                                              : { background: 'var(--border)', color: '#555' }
+                                                                                                            }
+                                                                                                          aria-label="送信"
+                                                                                                        >
+                                                                                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                                                                                        <path d="M1.5 1.5l13 6.5-13 6.5V9.5l9-1.5-9-1.5V1.5z" />
+                                                                                                          </svg>svg>
+                                                                                            </button>button>
+                                                                              </div>div>
+                                                                              <p className="text-center mt-2 text-xs" style={{ color: '#444' }}>
+                                                                                          Shift+Enter で改行 / Enter で送信
+                                                                              </p>p>
+                                                                    </div>div>
                                                             </div>div>
                                                       </div>div>
                                                     )
-                                                  }
-                                                  </a>
+                                                  }</a>
