@@ -1,8 +1,8 @@
 'use client'
 
-import React from 'react'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
+import React from 'react'
 import { incrementStats } from '../lib/stats'
 
 const LANGUAGES = [
@@ -20,7 +20,7 @@ const PLACEHOLDERS: Record<string, string> = {
   ja: 'GACKTにメッセージを送る...',
   en: 'Send a message to GACKT...',
   'zh-TW': '傳送訊息給GACKT...',
-  'zh-HK': '発送訊息給GACKT...',
+  'zh-HK': '發送訊息給GACKT...',
   es: 'Enviar un mensaje a GACKT...',
   ko: 'GACKT에게 메시지 보내기...',
   fr: 'Envoyer un message à GACKT...',
@@ -34,19 +34,8 @@ const GREETINGS: Record<string, string> = {
   'zh-HK': '歡迎來到 GACKT AI。請隨時發問。',
   es: 'Bienvenido al AI de GACKT. Pregúntame lo que quieras.',
   ko: 'GACKT AI에 오신 것을 환영합니다. 무엇이든 물어보세요.',
-  fr: "Bienvenue sur l'IA de GACKT. Posez-moi n'importe quelle question.",
+  fr: 'Bienvenue sur l\'IA de GACKT. Posez-moi n\'importe quelle question.',
   th: 'ยินดีต้อนรับสู่ GACKT AI. ถามฉันได้ทุกเรื่อง',
-}
-
-const LANGUAGE_NAMES: Record<string, string> = {
-  ja: 'Japanese',
-  en: 'English',
-  'zh-TW': 'Traditional Chinese',
-  'zh-HK': 'Cantonese',
-  es: 'Spanish',
-  ko: 'Korean',
-  fr: 'French',
-  th: 'Thai',
 }
 
 interface Message {
@@ -56,27 +45,21 @@ interface Message {
 }
 
 function renderText(text: string) {
-  const result: React.ReactNode[] = []
-  const lines = text.split('\n')
-  lines.forEach((line, li) => {
-    const re = /https?:\/\/[^\s）)]+/g
-    let last = 0
-    let m: RegExpExecArray | null
-    while ((m = re.exec(line)) !== null) {
-      if (m.index > last) result.push(line.slice(last, m.index))
-      result.push(React.createElement('a', {
-        key: li + '-' + m.index,
-        href: m[0],
-        target: '_blank',
-        rel: 'noopener noreferrer',
-        style: { color: '#f87171', textDecoration: 'underline', wordBreak: 'break-all' }
-      }, m[0]))
-      last = m.index + m[0].length
-    }
-    if (last < line.length) result.push(line.slice(last))
-    if (li < lines.length - 1) result.push(React.createElement('br', { key: 'br' + li }))
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split('\n')
+  return parts.map((line, i) => {
+    const segments = line.split(urlRegex)
+    return (
+      <React.Fragment key={i}>
+        {segments.map((seg, j) =>
+          urlRegex.test(seg)
+            ? <a key={j} href={seg} target="_blank" rel="noopener noreferrer" style={{ color: '#c9a96e', textDecoration: 'underline', wordBreak: 'break-all' }}>{seg}</a>
+            : seg
+        )}
+        {i < parts.length - 1 && <br />}
+      </React.Fragment>
+    )
   })
-  return result
 }
 
 export default function ChatInterface() {
@@ -111,17 +94,12 @@ export default function ChatInterface() {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, language: lang }),
       })
 
       const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to get a reply from the AI.')
-      }
+      if (!response.ok) throw new Error(data.error || 'Failed to get a reply from the AI.')
 
       incrementStats({
         category: data.categoryLabel === 'チケット希望'
@@ -163,50 +141,50 @@ export default function ChatInterface() {
   }
 
   return (
-    <div
-      className="relative flex flex-col h-screen overflow-hidden"
-      style={{
-        backgroundImage: 'url(/gackt-bg.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center 10%',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 30%, black 100%)' }} />
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/gackt-bg.jpg')", opacity: 0.2, filter: 'blur(2px)' }}
-      />
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.65) 100%)' }} />
-      <div className="relative flex flex-col h-full">
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 50%, #0a0a0a 100%)',
+      fontFamily: "'Helvetica Neue', Arial, sans-serif",
+      color: '#ffffff',
+      overflow: 'hidden',
+    }}>
       {/* Header */}
-      <header
-        className="flex-none flex items-center justify-between px-6 py-4 border-b"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className="text-2xl font-bold tracking-widest"
-            style={{ color: '#8B0000', fontFamily: 'serif', letterSpacing: '0.2em' }}
-          >
-            GACKT
-          </span>
-          <span
-            className="text-xs tracking-widest uppercase"
-            style={{ color: '#666', letterSpacing: '0.15em' }}
-          >
-            AI Chat
-          </span>
+      <header style={{
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 20px',
+        borderBottom: '1px solid rgba(201,169,110,0.2)',
+        background: 'rgba(0,0,0,0.4)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div>
+            <div style={{ fontSize: '16px', fontWeight: '300', letterSpacing: '4px', color: '#ffffff' }}>GACKT</div>
+            <div style={{ fontSize: '10px', letterSpacing: '3px', color: '#888888', textTransform: 'uppercase' }}>AI Chat</div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div
-            className="w-2 h-2 rounded-full animate-pulse"
-            style={{ background: '#8B0000' }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '6px', height: '6px', borderRadius: '50%',
+            background: '#c9a96e',
+            boxShadow: '0 0 6px #c9a96e',
+            animation: 'pulse 2s infinite',
+          }} />
           <Link
             href="/dashboard"
-            className="rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition-colors"
-            style={{ borderColor: '#5C0000', color: '#8B0000' }}
+            style={{
+              borderRadius: '20px',
+              border: '1px solid rgba(201,169,110,0.4)',
+              color: '#c9a96e',
+              padding: '5px 14px',
+              fontSize: '10px',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+            }}
           >
             Dashboard
           </Link>
@@ -214,29 +192,41 @@ export default function ChatInterface() {
       </header>
 
       {/* Language Selector */}
-      <div
-        className="flex-none px-4 py-3 border-b overflow-x-auto"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface-alt)' }}
-      >
-        <div className="flex gap-2 min-w-max mx-auto w-fit">
+      <div style={{
+        flexShrink: 0,
+        padding: '12px 16px',
+        borderBottom: '1px solid rgba(201,169,110,0.15)',
+        background: 'rgba(0,0,0,0.2)',
+        overflowX: 'auto',
+      }}>
+        <div style={{ display: 'flex', gap: '8px', minWidth: 'max-content' }}>
           {LANGUAGES.map(l => (
             <button
               key={l.code}
               onClick={() => handleLangChange(l.code)}
-              className="px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 whitespace-nowrap"
-              style={
-                lang === l.code
-                  ? {
-                      background: '#8B0000',
-                      color: '#fff',
-                      border: '1px solid #8B0000',
-                    }
-                  : {
-                      background: 'transparent',
-                      color: '#8B0000',
-                      border: '1px solid #5C0000',
-                    }
-              }
+              style={lang === l.code ? {
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: '500',
+                borderRadius: '16px',
+                border: '1px solid #c9a96e',
+                background: 'linear-gradient(135deg, #c9a96e, #a0793e)',
+                color: '#ffffff',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                letterSpacing: '0.5px',
+              } : {
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: '400',
+                borderRadius: '16px',
+                border: '1px solid rgba(201,169,110,0.3)',
+                background: 'transparent',
+                color: '#c9a96e',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                letterSpacing: '0.5px',
+              }}
             >
               {l.label}
             </button>
@@ -245,42 +235,62 @@ export default function ChatInterface() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: '24px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      }}>
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+          <div key={i} style={{
+            display: 'flex',
+            justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+            alignItems: 'flex-end',
+            gap: '8px',
+          }}>
             {msg.role === 'assistant' && (
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-none self-end mb-1"
-                style={{ background: '#8B0000', color: '#fff' }}
-              >
+              <div style={{
+                width: '28px', height: '28px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, #c9a96e, #a0793e)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '11px', fontWeight: '600', color: '#ffffff',
+                flexShrink: 0, letterSpacing: '1px',
+              }}>
                 G
               </div>
             )}
-            <div className="flex flex-col max-w-[75%]">
-              <div
-                className="px-4 py-3 rounded-2xl text-sm leading-relaxed"
-                style={
-                  msg.role === 'user'
-                    ? {
-                        background: '#8B0000',
-                        color: '#fff',
-                        borderBottomRightRadius: '4px',
-                      }
-                    : {
-                        background: 'var(--surface-alt)',
-                        color: 'var(--foreground)',
-                        border: '1px solid var(--border)',
-                        borderBottomLeftRadius: '4px',
-                      }
-                }
-              >
+            <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '75%' }}>
+              <div style={msg.role === 'user' ? {
+                padding: '12px 16px',
+                borderRadius: '18px 18px 4px 18px',
+                background: 'linear-gradient(135deg, #c9a96e, #a0793e)',
+                color: '#ffffff',
+                fontSize: '14px',
+                lineHeight: '1.6',
+                whiteSpace: 'pre-wrap',
+              } : {
+                padding: '12px 16px',
+                borderRadius: '18px 18px 18px 4px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(201,169,110,0.2)',
+                color: '#ffffff',
+                fontSize: '14px',
+                lineHeight: '1.6',
+                whiteSpace: 'pre-wrap',
+              }}>
                 {renderText(msg.text)}
               </div>
               {msg.role === 'user' && msg.categoryLabel && (
-                <span className="mt-1 text-[10px] uppercase tracking-wide self-end" style={{ color: '#888' }}>
+                <span style={{
+                  marginTop: '4px',
+                  fontSize: '10px',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase',
+                  color: '#888888',
+                  alignSelf: 'flex-end',
+                }}>
                   {msg.categoryLabel}
                 </span>
               )}
@@ -288,31 +298,30 @@ export default function ChatInterface() {
           </div>
         ))}
         {sending && (
-          <div className="flex justify-start">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-none self-end mb-1"
-              style={{ background: '#8B0000', color: '#fff' }}
-            >
+          <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '8px' }}>
+            <div style={{
+              width: '28px', height: '28px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #c9a96e, #a0793e)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '11px', fontWeight: '600', color: '#ffffff',
+              flexShrink: 0,
+            }}>
               G
             </div>
-            <div
-              className="px-4 py-3 rounded-2xl"
-              style={{
-                background: 'var(--surface-alt)',
-                border: '1px solid var(--border)',
-                borderBottomLeftRadius: '4px',
-              }}
-            >
-              <span className="flex gap-1 items-center">
+            <div style={{
+              padding: '12px 16px',
+              borderRadius: '18px 18px 18px 4px',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(201,169,110,0.2)',
+            }}>
+              <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                 {[0, 1, 2].map(d => (
-                  <span
-                    key={d}
-                    className="w-1.5 h-1.5 rounded-full animate-bounce"
-                    style={{
-                      background: '#8B0000',
-                      animationDelay: `${d * 0.15}s`,
-                    }}
-                  />
+                  <span key={d} style={{
+                    width: '6px', height: '6px', borderRadius: '50%',
+                    background: '#c9a96e',
+                    display: 'inline-block',
+                    animation: `bounce 1s ${d * 0.15}s infinite`,
+                  }} />
                 ))}
               </span>
             </div>
@@ -322,18 +331,21 @@ export default function ChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div
-        className="flex-none p-4 border-t"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-      >
-        <div
-          className="flex items-end gap-3 rounded-2xl px-4 py-3"
-          style={{ background: 'var(--surface-alt)', border: '1px solid var(--border)' }}
-          onFocus={() => {
-            const el = document.activeElement?.closest('[data-input-wrap]') as HTMLElement
-            if (el) el.style.borderColor = '#5C0000'
-          }}
-        >
+      <div style={{
+        flexShrink: 0,
+        padding: '16px',
+        borderTop: '1px solid rgba(201,169,110,0.2)',
+        background: 'rgba(0,0,0,0.3)',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          gap: '10px',
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(201,169,110,0.3)',
+          borderRadius: '24px',
+          padding: '10px 16px',
+        }}>
           <textarea
             ref={textareaRef}
             rows={1}
@@ -344,29 +356,54 @@ export default function ChatInterface() {
             }}
             onKeyDown={handleKeyDown}
             placeholder={PLACEHOLDERS[lang]}
-            className="flex-1 resize-none bg-transparent outline-none text-sm leading-relaxed"
-            style={{ color: 'var(--foreground)', maxHeight: '120px' }}
+            style={{
+              flex: 1,
+              resize: 'none',
+              background: 'transparent',
+              outline: 'none',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: '15px',
+              lineHeight: '1.5',
+              maxHeight: '120px',
+              fontFamily: "'Helvetica Neue', Arial, sans-serif",
+            }}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || sending}
-            className="flex-none w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
-            style={
-              input.trim() && !sending
-                ? { background: '#8B0000', color: '#fff' }
-                : { background: 'var(--border)', color: '#555' }
-            }
             aria-label="送信"
+            style={{
+              flexShrink: 0,
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: input.trim() && !sending ? 'pointer' : 'not-allowed',
+              background: input.trim() && !sending
+                ? 'linear-gradient(135deg, #c9a96e, #a0793e)'
+                : 'rgba(201,169,110,0.2)',
+              color: '#ffffff',
+              transition: 'all 0.2s',
+            }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
               <path d="M1.5 1.5l13 6.5-13 6.5V9.5l9-1.5-9-1.5V1.5z" />
             </svg>
           </button>
         </div>
-        <p className="text-center mt-2 text-xs" style={{ color: '#444' }}>
+        <p style={{
+          textAlign: 'center',
+          marginTop: '8px',
+          fontSize: '11px',
+          color: '#555555',
+          letterSpacing: '0.5px',
+        }}>
           Shift+Enter で改行 / Enter で送信
         </p>
-      </div>
       </div>
     </div>
   )
