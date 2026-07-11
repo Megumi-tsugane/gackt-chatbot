@@ -287,7 +287,7 @@ export default function ChatInterface() {
                 </div>
                 {msg.role === 'user' && msg.category && (
                   <span className="mt-1 text-[10px] uppercase tracking-wide self-end" style={{ color: '#888' }}>
-                    {msg.CATEGORY_LABELS[msg.category]?.[lang] ?? msg.category}
+                    {CATEGORY_LABELS[msg.category]?.[lang] ?? msg.category}
                   </span>
                 )}
               </div>
