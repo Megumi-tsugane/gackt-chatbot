@@ -17,7 +17,7 @@ const LANGUAGES = [
 ]
 
 const PLACEHOLDERS: Record<string, string> = {
-  ja: 'GACKT܁�メッセージを送る...',
+  ja: 'GACKTへメッセージを送る...',
   en: 'Send a message to GACKT...',
   'zh-TW': '傳送訊息給GACKT...',
   'zh-HK': '発送訊息給GACKT...',
