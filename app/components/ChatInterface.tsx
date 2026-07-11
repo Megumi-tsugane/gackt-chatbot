@@ -28,14 +28,14 @@ const PLACEHOLDERS: Record<string, string> = {
 }
 
 const GREETINGS: Record<string, string> = {
-  ja: 'GACKTのAIチャットボットへようこそ。何でも聞いてください。',
-  en: 'Welcome to GACKT AI. Ask me anything.',
-  'zh-TW': '歡迎來到 GACKT AI。請隨時提問。',
-  'zh-HK': '歡迎來到 GACKT AI。請隨時發問。',
-  es: 'Bienvenido al AI de GACKT. Pregúntame lo que quieras.',
-  ko: 'GACKT AI에 오신 것을 환영합니다. 무엇이든 물어보세요.',
-  fr: "Bienvenue sur l'IA de GACKT. Posez-moi n'importe quelle question.",
-  th: 'ยินดีต้อนรับสู่ GACKT AI. ถามฉันได้ทุกเรื่อง',
+  ja: 'GACKT OFFICIALスタッフです。チケット・ライブ・最新情報など、お気軽にお問い合わせください。',
+  en: 'Welcome to GACKT OFFICIAL. We are here to assist with tickets, live events, and the latest news.',
+  'zh-TW': '歡迎來到 GACKT OFFICIAL。有關票務、演出及最新資訊，請隨時提問。',
+  'zh-HK': '歡迎來到 GACKT OFFICIAL。有關票務、演出及最新消息，請隨時發問。',
+  es: 'Bienvenido a GACKT OFFICIAL. Estamos aquí para ayudarte con entradas, eventos y últimas noticias.',
+  ko: 'GACKT OFFICIAL 스탭입니다. 티켓・라이브・최신 정보 등 무엇이든 문의해 주세요.',
+  fr: "Bienvenue chez GACKT OFFICIAL. Nous sommes là pour vous aider avec les billets, les événements et les dernières nouvelles.",
+  th: 'ยินดีต้อนรับสู่ GACKT OFFICIAL เราพร้อมช่วยเรื่องบัตร, งานแสดง และข่าวสารล่าสุด',
 }
 
 const LANGUAGE_NAMES: Record<string, string> = {
