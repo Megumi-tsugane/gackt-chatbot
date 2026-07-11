@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { incrementStats } from '../lib/stats'
@@ -188,12 +189,14 @@ export default function ChatInterface() {
           style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
         >
           <div className="flex items-center gap-3">
-            <span
-              className="text-2xl font-bold tracking-widest"
-              style={{ color: '#8B0000', fontFamily: 'serif', letterSpacing: '0.2em' }}
-            >
-              GACKT
-            </span>
+            <Image
+            src="https://gackt.com/s3/skiyaki/uploads/link/image/12892/logo-1.png"
+            alt="GACKT"
+            width={90}
+            height={42}
+            style={{ objectFit: 'contain' }}
+            priority
+          />
             <span
               className="text-xs tracking-widest uppercase"
               style={{ color: '#666', letterSpacing: '0.15em' }}
