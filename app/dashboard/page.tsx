@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { getStoredStats, subscribeToStatsUpdates } from '../lib/stats'
 
@@ -36,9 +37,17 @@ export default function DashboardPage() {
     <div className="min-h-screen" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
         <header className="rounded-2xl border px-6 py-6" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <p className="text-sm uppercase tracking-[0.3em]" style={{ color: '#8B0000' }}>
-            GACKT Dashboard
-          </p>
+          <div className="flex items-center gap-4">
+            <Image
+              src="https://gackt.com/s3/skiyaki/uploads/link/image/12892/logo-1.png"
+              alt="GACKT"
+              width={72}
+              height={34}
+              style={{ objectFit: 'contain' }}
+              priority
+            />
+            <span className="text-sm uppercase tracking-[0.3em]" style={{ color: '#8B0000' }}>Dashboard</span>
+          </div>
           <h1 className="mt-2 text-3xl font-semibold">メッセージ統計</h1>
           <p className="mt-2 text-sm" style={{ color: '#aaa' }}>
             メッセージ送信ごとに件数が自動で加算されます。
