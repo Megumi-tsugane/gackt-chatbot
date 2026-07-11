@@ -123,7 +123,7 @@ export default function ChatInterface() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: text, language: lang }),
+        body: JSON.stringify({ message: text, language: lang, messages: messages.slice(-10).map(m => ({ role: m.role, text: m.text })) }),
       })
 
       const data = await response.json()
