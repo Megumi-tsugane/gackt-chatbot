@@ -17,14 +17,14 @@ const LANGUAGES = [
 ]
 
 const PLACEHOLDERS: Record<string, string> = {
-  ja: 'GACKTへメッセージを送る...',
-  en: 'Send a message to GACKT...',
-  'zh-TW': '傳送訊息給GACKT...',
-  'zh-HK': '発送訊息給GACKT...',
-  es: 'Enviar un mensaje a GACKT...',
-  ko: 'GACKT에게 메시지 보내기...',
-  fr: 'Envoyer un message à GACKT...',
-  th: 'ส่งข้อความถึง GACKT...',
+  ja: 'スタッフへお問い合わせ...',
+  en: 'Send us a message...',
+  'zh-TW': '傳送訊息...',
+  'zh-HK': '発送訊息...',
+  es: 'Enviar un mensaje...',
+  ko: '메시지 보내기...',
+  fr: 'Envoyer un message...',
+  th: 'ส่งข้อความ...',
 }
 
 const GREETINGS: Record<string, string> = {
