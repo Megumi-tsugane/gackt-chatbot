@@ -131,7 +131,7 @@ Instructions:
       }
     }
 
-    return NextResponse.json({ reply, categoryLabel: CATEGORY_LABELS[category] })
+    return NextResponse.json({ reply, category })
   } catch (error) {
     console.error('Anthropic API error:', error)
     return NextResponse.json(
