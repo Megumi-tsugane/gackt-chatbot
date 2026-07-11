@@ -1,4 +1,4 @@
-export type CategoryKey = 'inquiry' | 'ticket_request' | 'announcement_response' | 'other'
+export type CategoryKey = 'inquiry' | 'ticket_request' | 'announcement_response' | 'complaint' | 'other'
 export type LanguageKey = 'ja' | 'en' | 'zh-TW' | 'zh-HK' | 'es' | 'ko' | 'fr' | 'th'
 
 export interface ChatStats {
@@ -16,6 +16,7 @@ const defaultStats = (): ChatStats => ({
     inquiry: 0,
     ticket_request: 0,
     announcement_response: 0,
+    complaint: 0,
     other: 0,
   },
   languages: {
