@@ -38,6 +38,14 @@ const GREETINGS: Record<string, string> = {
   th: 'ยินดีต้อนรับสู่ GACKT OFFICIAL เราพร้อมช่วยเรื่องบัตร, งานแสดง และข่าวสารล่าสุด',
 }
 
+const CATEGORY_LABELS: Record<string, Record<string, string>> = {
+  inquiry:               { ja: '問い合わせ', en: 'Inquiry', 'zh-TW': '查詢', 'zh-HK': '查詢', es: 'Consulta', ko: '문의', fr: 'Demande', th: 'สอบถาม' },
+  ticket_request:        { ja: 'チケット希望', en: 'Ticket Request', 'zh-TW': '票務', 'zh-HK': '票務', es: 'Solicitud de Entrada', ko: '티켓 요청', fr: 'Demande de Billet', th: 'ขอบัตร' },
+  announcement_response: { ja: '告知反応', en: 'Announcement', 'zh-TW': '公告回應', 'zh-HK': '公告回應', es: 'Anuncio', ko: '공지 반응', fr: 'Annonce', th: 'ตอบประกาศ' },
+  complaint:             { ja: 'クレーム', en: 'Complaint', 'zh-TW': '投訴', 'zh-HK': '投訴', es: 'Queja', ko: '불만', fr: 'Réclamation', th: 'ร้องเรียน' },
+  other:                 { ja: 'その他', en: 'Other', 'zh-TW': '其他', 'zh-HK': '其他', es: 'Otro', ko: '기타', fr: 'Autre', th: 'อื่นๆ' },
+}
+
 const LANGUAGE_NAMES: Record<string, string> = {
   ja: 'Japanese',
   en: 'English',
@@ -52,7 +60,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
 interface Message {
   role: 'user' | 'assistant'
   text: string
-  categoryLabel?: string
+  category?: string
 }
 
 function renderText(text: string) {
@@ -124,19 +132,13 @@ export default function ChatInterface() {
       }
 
       incrementStats({
-        category: data.categoryLabel === 'チケット希望'
-          ? 'ticket_request'
-          : data.categoryLabel === '問い合わせ'
-          ? 'inquiry'
-          : data.categoryLabel === '告知反応'
-          ? 'announcement_response'
-          : 'other',
+        category: (data.category as 'ticket_request' | 'inquiry' | 'announcement_response' | 'complaint' | 'other') ?? 'other',
         language: lang as 'ja' | 'en' | 'zh-TW' | 'zh-HK' | 'es' | 'ko' | 'fr' | 'th',
       })
 
       setMessages(prev => {
         const updated = prev.map((msg, index) =>
-          index === userMessageIndex ? { ...msg, categoryLabel: data.categoryLabel } : msg,
+          index === userMessageIndex ? { ...msg, category: data.category } : msg,
         )
         return [...updated, { role: 'assistant', text: data.reply }]
       })
@@ -280,9 +282,9 @@ export default function ChatInterface() {
                 >
                   {renderText(msg.text)}
                 </div>
-                {msg.role === 'user' && msg.categoryLabel && (
+                {msg.role === 'user' && msg.category && (
                   <span className="mt-1 text-[10px] uppercase tracking-wide self-end" style={{ color: '#888' }}>
-                    {msg.categoryLabel}
+                    {msg.CATEGORY_LABELS[msg.category]?.[lang] ?? msg.category}
                   </span>
                 )}
               </div>
