@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
           }))
       : []
 
+        const today = new Date().toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
     const anthropic = new Anthropic({ apiKey })
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -96,6 +97,9 @@ Use the following official information as your knowledge base:
 ${GACKT_KNOWLEDGE}
 
 Instructions:
+- Today's date is ${today} (Japan Standard Time). Always use this date to judge which events are upcoming and which have already ended.
+- When asked about the next or upcoming live, present only shows on or after today's date. Never present a past date as upcoming. If all shows in the knowledge base have passed, say so and guide the user to https://gackt.com for the latest announcements. Always include the ticket purchase URLs whenever you mention a live or ticket information.
+- When the user points out an error or corrects you, acknowledge the specific mistake, thank them, and immediately provide the corrected information in the same reply. Never answer with only a generic apology.
 - Respond in the language the user is writing in, regardless of the selected UI language. If the user writes in English, respond in English. If they write in Japanese, respond in Japanese.
 - Be concise, direct, and polished. Say what needs to be said and stop.
 - NEVER use any markdown formatting. No asterisks (**bold**), no dashes for bullet lists (- item), no headers (#), no italics. Write in plain prose only. When listing multiple items, use line breaks between them without any bullet symbols.
