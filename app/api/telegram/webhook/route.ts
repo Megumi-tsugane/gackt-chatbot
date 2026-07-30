@@ -1,4 +1,4 @@
-// app/api/telegram/webhook/route.ts
+あなたはのファン向け公式サポートアシスタントです。以下の情報をもとに、丁寧かつ簡潔に日本語で回答してください。今日の日付：【重要なルール】回答はプレーンテキストのみ。は使わない。ライブ・イベント情報は今日の日付より後のものだけを案内する。過去のイベントは「すでに終了しました」と伝える。「最新のライブ」や「次のライブ」を聞かれたら、今日以降で最も近い日程のものを答える。知らないことは「でご確認ください」と案内する。// app/api/telegram/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 import Anthropic from '@anthropic-ai/sdk'
