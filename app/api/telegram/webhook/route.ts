@@ -1,20 +1,22 @@
-あなたはのファン向け公式サポートアシスタントです。以下の情報をもとに、丁寧かつ簡潔に日本語で回答してください。今日の日付：【厳守ルール】回答はプレーンテキストのみ。は使わない。「最新のライブ」「次のライブ」と聞かれたら、今日の日付より後に開演する公演のうち最も近いものだけを答える。今日より前に開演したライブ・イベント（生誕祭・など）は絶対に「最新」「次」として案内しない。アーカイブ配信・・動画配信のお知らせはライブ情報として扱わない。過去のイベントを聞かれたら「すでに終了しました」と伝える。知らないことは「でご確認ください」と案内する。あなたはのファン向け公式サポートアシスタントです。以下の情報をもとに、丁寧かつ簡潔に日本語で回答してください。今日の日付：【重要なルール】回答はプレーンテキストのみ。は使わない。ライブ・イベント情報は今日の日付より後のものだけを案内する。過去のイベントは「すでに終了しました」と伝える。「最新のライブ」や「次のライブ」を聞かれたら、今日以降で最も近い日程のものを答える。知らないことは「でご確認ください」と案内する。// app/api/telegram/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 import Anthropic from '@anthropic-ai/sdk'
 
-/**
- * Telegram Webhook 受け取り口
- *
- * 仕組み:
- *   Telegram サーバー → POST /api/telegram/webhook → このファイル
- *   → secret_token を検証 → テキストメッセージを Claude に渡して返信
- *
- * 環境変数 (.env.local):
- *   TELEGRAM_BOT_TOKEN    … BotFather で発行したトークン
- *   TELEGRAM_SECRET_TOKEN … setWebhook 時に指定した合言葉
- *   ANTHROPIC_API_KEY     … Anthropic API キー（既存）
- */
+async function fetchLiveKnowledge(): Promise<string> {
+  try {
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'https://gackt-chatbot.vercel.app'
+    const res = await fetch(`${baseUrl}/api/knowledge`, { next: { revalidate: 3600 } })
+    if (!res.ok) throw new Error(`knowledge fetch failed: ${res.status}`)
+    const data = await res.json()
+    return typeof data.knowledge === 'string' && data.knowledge.trim()
+      ? data.knowledge
+      : GACKT_KNOWLEDGE
+  } catch {
+    return GACKT_KNOWLEDGE
+  }
+}
 
 async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN
@@ -28,50 +30,37 @@ async function sendTelegramMessage(chatId: number, text: string): Promise<void> 
 async function generateReply(userMessage: string): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return userMessage
-
   try {
     const anthropic = new Anthropic({ apiKey })
+    const today = new Date().toLocaleDateString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
+    })
+    const knowledge = await fetchLiveKnowledge()
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
-      system: `あなたはGACKTのファン向け公式サポートアシスタントです。以下の情報をもとに、丁寧かつ簡潔に日本語で回答してください。
-
-${GACKT_KNOWLEDGE}
-
-- 回答はプレーンテキストのみ。Markdownは使わない。
-- 知らないことは「gackt.com でご確認ください」と案内する。`,
+      system: `あなたはGACKTのファン向け公式サポートアシスタントです。以下の情報をもとに、丁寧かつ簡潔に日本語で回答してください。\n\n今日の日付：${today}\n\n${knowledge}\n\n【厳守ルール】\n- 回答はプレーンテキストのみ。Markdownは使わない。\n- 「最新のライブ」「次のライブ」と聞かれたら、今日の日付より後に開演する公演のうち最も近いものだけを答える。\n- 今日より前に開演したライブ・イベント（生誕祭・LAST SONGSなど）は絶対に「最新」「次」として案内しない。\n- アーカイブ配信・U-NEXT・動画配信のお知らせはライブ情報として扱わない。\n- 過去のイベントを聞かれたら「すでに終了しました」と伝える。\n- 知らないことは「gackt.com でご確認ください」と案内する。`,
       messages: [{ role: 'user', content: userMessage }],
     })
     return response.content.map(c => ('text' in c ? c.text : '')).join('')
-  } catch {
-    return userMessage
-  }
+  } catch { return userMessage }
 }
 
 export async function POST(request: NextRequest) {
-  // ① secret_token ヘッダーを検証
   const incomingSecret = request.headers.get('x-telegram-bot-api-secret-token')
   const expectedSecret = process.env.TELEGRAM_SECRET_TOKEN
-
   if (expectedSecret && incomingSecret !== expectedSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
   try {
     const body = await request.json()
     const message = body?.message
-
-    if (!message?.text) {
-      return NextResponse.json({ ok: true })
-    }
-
+    if (!message?.text) return NextResponse.json({ ok: true })
     const chatId: number = message.chat.id
     const userText: string = message.text
-
-    // ② Claude で返答を生成して送信
     const reply = await generateReply(userText)
     await sendTelegramMessage(chatId, reply)
-
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('[Telegram Webhook] Error:', error)
