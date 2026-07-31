@@ -1,7 +1,9 @@
+// app/api/line/webhook/route.ts
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 import Anthropic from '@anthropic-ai/sdk'
+import { incrementServerStats, CategoryKey, LanguageKey } from '@/lib/serverStats'
 
 async function fetchLiveKnowledge(): Promise<string> {
   try {
@@ -34,24 +36,48 @@ async function replyToLine(replyToken: string, text: string): Promise<void> {
   })
 }
 
-async function generateReply(userMessage: string): Promise<string> {
+// テキストからカテゴリを簡易判定
+function classifyMessage(text: string): CategoryKey {
+  const t = text.toLowerCase()
+  if (/チケット|ticket|ライブ|live|concert|チケ/.test(t)) return 'ticket_request'
+  if (/告知|ニュース|news|お知らせ|新曲|アルバム|リリース/.test(t)) return 'announcement_response'
+  if (/不満|怒|苦情|批判|返金|キャンセル|refund|cancel|complaint|angry|dissatisfied|disappointed|terrible|不便|失望/.test(t)) return 'complaint'
+  return 'inquiry'
+}
+
+// テキストから言語を簡易判定
+function detectLanguage(text: string): LanguageKey {
+  if (/[ぁ-んァ-ン]/.test(text)) return 'ja'
+  if (/[가-힣]/.test(text)) return 'ko'
+  if (/[一-龯]/.test(text)) return 'zh-TW'
+  return 'en'
+}
+
+async function generateReply(userMessage: string, knowledge: string): Promise<{ reply: string; category: CategoryKey }> {
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return userMessage
+  if (!apiKey) return { reply: userMessage, category: 'inquiry' }
+
+  const category = classifyMessage(userMessage)
+
   try {
     const anthropic = new Anthropic({ apiKey })
-    const today = new Date().toLocaleDateString('ja-JP', {
-      timeZone: 'Asia/Tokyo',
-      year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
-    })
-    const knowledge = await fetchLiveKnowledge()
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
-      system: `あなたはGACKTのファン向け公式サポートアシスタントです。以下の情報をもとに、丁寧かつ簡潔に日本語で回答してください。\n\n今日の日付：${today}\n\n${knowledge}\n\n【厳守ルール】\n- 回答はプレーンテキストのみ。Markdownは使わない。\n- 「最新のライブ」「次のライブ」と聞かれたら、今日の日付より後に開演する公演のうち最も近いものだけを答える。\n- 今日より前に開演したライブ・イベント（生誕祭・LAST SONGSなど）は絶対に「最新」「次」として案内しない。\n- アーカイブ配信・U-NEXT・動画配信のお知らせはライブ情報として扱わない。\n- 過去のイベントを聞かれたら「すでに終了しました」と伝える。\n- 知らないことは「gackt.com でご確認ください」と案内する。`,
+      system: `あなたはGACKT公式スタッフによるAI Botです。以下の情報をもとに、丁寧かつ簡潔に日本語で回答してください。
+
+${knowledge}
+
+- 回答はプレーンテキストのみ。Markdownは使わない。
+- 知らないことは「gackt.com でご確認ください」と案内する。
+- クレームや不満には、まず謝罪し、具体的な解決策を提示してください。`,
       messages: [{ role: 'user', content: userMessage }],
     })
-    return response.content.map(c => ('text' in c ? c.text : '')).join('')
-  } catch { return userMessage }
+    const reply = response.content.map(c => ('text' in c ? c.text : '')).join('')
+    return { reply, category }
+  } catch {
+    return { reply: userMessage, category }
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -84,11 +110,19 @@ export async function POST(request: NextRequest) {
       }>
     }
 
+    const knowledge = await fetchLiveKnowledge()
+
     for (const event of events) {
       if (event.type === 'message' && event.message?.type === 'text') {
         const userText = event.message.text
         const replyToken = event.replyToken
-        const reply = await generateReply(userText)
+
+        const { reply, category } = await generateReply(userText, knowledge)
+        const language = detectLanguage(userText)
+
+        // 統計を記録（fire-and-forget）
+        incrementServerStats({ category, language }).catch(() => {})
+
         await replyToLine(replyToken, reply)
       }
     }
