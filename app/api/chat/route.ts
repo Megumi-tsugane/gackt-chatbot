@@ -84,30 +84,28 @@ export async function POST(request: NextRequest) {
           }))
       : []
 
-        const today = new Date().toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
     const anthropic = new Anthropic({ apiKey })
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       temperature: 0.7,
-      system: `You are an official staff member of GACKT's team. You are not GACKT himself — you represent GACKT's office and handle inquiries on his behalf. Respond with the precision and sophistication that reflects GACKT's premium brand.
-
-Use the following official information as your knowledge base:
+      system: `You are GACKT's official support assistant. You must answer politely and accurately as a GACKT staff member using the following official information as your knowledge base.
 
 ${GACKT_KNOWLEDGE}
 
 Instructions:
-- Today's date is ${today} (Japan Standard Time). Always use this date to judge which events are upcoming and which have already ended.
-- When asked about the next or upcoming live, present only shows on or after today's date. Never present a past date as upcoming. If all shows in the knowledge base have passed, say so and guide the user to https://gackt.com for the latest announcements. Always include the ticket purchase URLs whenever you mention a live or ticket information.
-- When the user points out an error or corrects you, acknowledge the specific mistake, thank them, and immediately provide the corrected information in the same reply. Never answer with only a generic apology.
-- Respond in the language the user is writing in, regardless of the selected UI language. If the user writes in English, respond in English. If they write in Japanese, respond in Japanese.
-- Be concise, direct, and polished. Say what needs to be said and stop.
-- NEVER use any markdown formatting. No asterisks (**bold**), no dashes for bullet lists (- item), no headers (#), no italics. Write in plain prose only. When listing multiple items, use line breaks between them without any bullet symbols.
-- NEVER end with conversation-extending filler phrases like "Let me know if you have any other questions", "Feel free to ask", "Please don't hesitate to contact us", or similar. End the response when the information is complete.
-- Do not repeat the same closing phrase across messages. Every response ends differently.
-- Use the conversation history to maintain context. Never repeat a response verbatim.
-- For official information (tickets, live dates, fan club, SNS, drama), cite only what is in the knowledge base — do not invent details.
-- If the message expresses dissatisfaction, anger, a complaint, refund request, or cancellation: classify it as complaint. Respond with calm professionalism — acknowledge the concern directly, apologize sincerely, and direct them to the official contact form at https://gackt.com. Do not repeat the same apology phrasing across complaint responses.
+- Respond in the user's selected language: ${language || 'ja'}.
+- Keep the reply concise, natural, and helpful.
+- Do not use Markdown tables or pipe-delimited table formatting. Respond using plain sentences or bullet points instead.
+- Use the conversation history to understand the ongoing context and avoid repeating the same reply.
+- If the user asks about official information, use the provided knowledge exactly and do not invent details.
+- If the user asks about tickets, live dates, SNS, the fan club, or the drama, answer based only on the provided information.
+- If the message contains dissatisfaction, anger, complaints, criticism, refund requests, or cancellation requests, classify it as complaint and respond with a calm, apologetic message.
+- If the user is making a complaint or expressing dissatisfaction, follow this simple flow:
+  1. First, apologize and show empathy.
+  2. Then offer a concrete solution based on the issue (for example, ticket not received -> contact the purchase site's support window; defective goods -> use the official site inquiry form).
+  3. Finally, guide the user to the inquiry form at https://gackt.com.
+  Avoid repeating the same reply; adapt your response to the specific details of the user's complaint.
 - Classify the user's message into exactly one of these categories: inquiry, ticket_request, announcement_response, complaint, other.
 - Return ONLY valid JSON with exactly two fields: reply and category.
 - Do not wrap it in markdown or add any extra text.
@@ -135,7 +133,24 @@ Instructions:
       }
     }
 
-    return NextResponse.json({ reply, category })
+    // 統計を非同期で記録（失敗しても本体に影響なし）
+    try {
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000'
+      const lang = (language || 'ja') as string
+      const validLangs = ['ja', 'en', 'zh-TW', 'zh-HK', 'es', 'ko', 'fr', 'th']
+      const statsLang = validLangs.includes(lang) ? lang : 'en'
+      fetch(`${baseUrl}/api/stats`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category, language: statsLang }),
+      }).catch(() => {})
+    } catch {
+      // 統計失敗は無視
+    }
+
+    return NextResponse.json({ reply, categoryLabel: CATEGORY_LABELS[category] })
   } catch (error) {
     console.error('Anthropic API error:', error)
     return NextResponse.json(
