@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
+import { incrementServerStats, CategoryKey, LanguageKey } from '@/lib/serverStats'
 
 const CATEGORY_LABELS = {
   inquiry: '問い合わせ',
@@ -102,10 +103,10 @@ Instructions:
 - If the user asks about tickets, live dates, SNS, the fan club, or the drama, answer based only on the provided information.
 - If the message contains dissatisfaction, anger, complaints, criticism, refund requests, or cancellation requests, classify it as complaint and respond with a calm, apologetic message.
 - If the user is making a complaint or expressing dissatisfaction, follow this simple flow:
-  1. First, apologize and show empathy.
-  2. Then offer a concrete solution based on the issue (for example, ticket not received -> contact the purchase site's support window; defective goods -> use the official site inquiry form).
-  3. Finally, guide the user to the inquiry form at https://gackt.com.
-  Avoid repeating the same reply; adapt your response to the specific details of the user's complaint.
+1. First, apologize and show empathy.
+2. Then offer a concrete solution based on the issue (for example, ticket not received -> contact the purchase site's support window; defective goods -> use the official site inquiry form).
+3. Finally, guide the user to the inquiry form at https://gackt.com.
+Avoid repeating the same reply; adapt your response to the specific details of the user's complaint.
 - Classify the user's message into exactly one of these categories: inquiry, ticket_request, announcement_response, complaint, other.
 - Return ONLY valid JSON with exactly two fields: reply and category.
 - Do not wrap it in markdown or add any extra text.
@@ -133,22 +134,11 @@ Instructions:
       }
     }
 
-    // 統計を非同期で記録（失敗しても本体に影響なし）
-    try {
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000'
-      const lang = (language || 'ja') as string
-      const validLangs = ['ja', 'en', 'zh-TW', 'zh-HK', 'es', 'ko', 'fr', 'th']
-      const statsLang = validLangs.includes(lang) ? lang : 'en'
-      fetch(`${baseUrl}/api/stats`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, language: statsLang }),
-      }).catch(() => {})
-    } catch {
-      // 統計失敗は無視
-    }
+    // 統計を直接 Redis に記録（fire-and-forget）
+    const lang = (language || 'ja') as string
+    const validLangs: LanguageKey[] = ['ja', 'en', 'zh-TW', 'zh-HK', 'es', 'ko', 'fr', 'th']
+    const statsLang: LanguageKey = validLangs.includes(lang as LanguageKey) ? lang as LanguageKey : 'en'
+    incrementServerStats({ category: category as CategoryKey, language: statsLang }).catch(() => {})
 
     return NextResponse.json({ reply, categoryLabel: CATEGORY_LABELS[category] })
   } catch (error) {
