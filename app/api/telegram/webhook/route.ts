@@ -2,7 +2,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 import Anthropic from '@anthropic-ai/sdk'
+import { Redis } from '@upstash/redis'
 import { incrementServerStats, CategoryKey, LanguageKey } from '@/lib/serverStats'
+
+const redis = Redis.fromEnv()
+
+type HistoryItem = { role: 'user' | 'assistant'; content: string }
+
+/** Redis から会話履歴を取得（最大6件＝3往復） */
+async function getHistory(chatId: number): Promise<HistoryItem[]> {
+  try {
+    const data = await redis.get<HistoryItem[]>(`tg:hist:${chatId}`)
+    return Array.isArray(data) ? data : []
+  } catch {
+    return []
+  }
+}
+
+/** Redis に会話履歴を保存（1時間TTL、最大6件） */
+async function saveHistory(chatId: number, history: HistoryItem[]): Promise<void> {
+  try {
+    await redis.set(`tg:hist:${chatId}`, history.slice(-6), { ex: 3600 })
+  } catch {
+    // 保存失敗は無視
+  }
+}
 
 async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN
@@ -30,9 +54,12 @@ function detectLanguage(text: string): LanguageKey {
   return 'en'
 }
 
-async function generateReply(userMessage: string): Promise<{ reply: string; category: CategoryKey }> {
+async function generateReply(
+  userMessage: string,
+  history: HistoryItem[],
+): Promise<{ reply: string; category: CategoryKey }> {
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return { reply: userMessage, category: 'inquiry' }
+  if (!apiKey) return { reply: 'しばらくお待ちください。', category: 'inquiry' }
 
   const category = classifyMessage(userMessage)
   const today = new Date().toLocaleDateString('ja-JP', {
@@ -48,23 +75,27 @@ async function generateReply(userMessage: string): Promise<{ reply: string; cate
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
-      system: `あなたはGACKT公式スタッフによるAI Botです。以下の情報をもとに、丁寧かつ簡潔に日本語で回答してください。
+      system: `あなたはGACKT公式スタッフによるTelegram AI Botです。以下の情報をもとに回答してください。
 
 ${GACKT_KNOWLEDGE}
 
 今日の日付（JST）: ${today}
 
-- 「次のライブ」「今後の公演」「これからのライブ」を聞かれた場合は、今日（${today}）以降の公演のみ案内する。今日より前の公演は絶対に案内しない。
-- 指摘・訂正を受けたら具体的に認めて感謝し、同じ返信内で正しい情報を出す（一般的な謝罪だけで終わらせない）。
+- 「次のライブ」「今後の公演」「これからのライブ」を聞かれた場合は、今日（${today}）以降の公演のみ案内する。過去公演は絶対に出さない。
+- 指摘・訂正を受けたら具体的に認めて感謝し、同じ返信内で正しい情報を出す。
+- 会話履歴を参照し、同じ返答を繰り返さないこと。
 - 回答はプレーンテキストのみ。Markdownは使わない。
 - 知らないことは「gackt.com でご確認ください」と案内する。
 - クレームや不満には、まず謝罪し、具体的な解決策を提示してください。`,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [
+        ...history,
+        { role: 'user', content: userMessage },
+      ],
     })
     const reply = response.content.map(c => ('text' in c ? c.text : '')).join('')
     return { reply, category }
   } catch {
-    return { reply: userMessage, category }
+    return { reply: 'しばらくお待ちください。', category }
   }
 }
 
@@ -87,8 +118,19 @@ export async function POST(request: NextRequest) {
     const chatId: number = message.chat.id
     const userText: string = message.text
 
-    const { reply, category } = await generateReply(userText)
+    // 会話履歴を取得
+    const history = await getHistory(chatId)
+
+    const { reply, category } = await generateReply(userText, history)
     const language = detectLanguage(userText)
+
+    // 履歴を更新して保存
+    const updatedHistory: HistoryItem[] = [
+      ...history,
+      { role: 'user', content: userText },
+      { role: 'assistant', content: reply },
+    ]
+    await saveHistory(chatId, updatedHistory)
 
     // 統計を記録（fire-and-forget）
     incrementServerStats({ category, language }).catch(() => {})
