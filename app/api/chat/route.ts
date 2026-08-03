@@ -49,6 +49,13 @@ function isComplaintMessage(message: string) {
   return COMPLAINT_KEYWORDS.some(keyword => normalized.includes(keyword.toLowerCase()))
 }
 
+// language パラメータを LanguageKey に正規化
+function normalizeLanguage(lang: string | undefined): LanguageKey {
+  const validLangs: LanguageKey[] = ['ja', 'en', 'zh-TW', 'zh-HK', 'es', 'ko', 'fr', 'th']
+  if (lang && validLangs.includes(lang as LanguageKey)) return lang as LanguageKey
+  return 'ja'
+}
+
 type ConversationHistoryItem = {
   role: 'assistant' | 'user'
   content: string
@@ -85,6 +92,14 @@ export async function POST(request: NextRequest) {
           }))
       : []
 
+    const today = new Date().toLocaleDateString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    })
+
     const anthropic = new Anthropic({ apiKey })
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -94,19 +109,23 @@ export async function POST(request: NextRequest) {
 
 ${GACKT_KNOWLEDGE}
 
+Today's date (JST): ${today}
+
 Instructions:
 - Respond in the user's selected language: ${language || 'ja'}.
 - Keep the reply concise, natural, and helpful.
 - Do not use Markdown tables or pipe-delimited table formatting. Respond using plain sentences or bullet points instead.
 - Use the conversation history to understand the ongoing context and avoid repeating the same reply.
 - If the user asks about official information, use the provided knowledge exactly and do not invent details.
+- If the user asks about upcoming lives, next concert, or future events, only mention events that are AFTER today (${today}). Never mention past events as upcoming.
+- If the user corrects you or points out an error, acknowledge it specifically and provide the correct information in the same response.
 - If the user asks about tickets, live dates, SNS, the fan club, or the drama, answer based only on the provided information.
 - If the message contains dissatisfaction, anger, complaints, criticism, refund requests, or cancellation requests, classify it as complaint and respond with a calm, apologetic message.
 - If the user is making a complaint or expressing dissatisfaction, follow this simple flow:
-1. First, apologize and show empathy.
-2. Then offer a concrete solution based on the issue (for example, ticket not received -> contact the purchase site's support window; defective goods -> use the official site inquiry form).
-3. Finally, guide the user to the inquiry form at https://gackt.com.
-Avoid repeating the same reply; adapt your response to the specific details of the user's complaint.
+  1. First, apologize and show empathy.
+  2. Then offer a concrete solution based on the issue (for example, ticket not received -> contact the purchase site's support window; defective goods -> use the official site inquiry form).
+  3. Finally, guide the user to the inquiry form at https://gackt.com.
+  Avoid repeating the same reply; adapt your response to the specific details of the user's complaint.
 - Classify the user's message into exactly one of these categories: inquiry, ticket_request, announcement_response, complaint, other.
 - Return ONLY valid JSON with exactly two fields: reply and category.
 - Do not wrap it in markdown or add any extra text.
@@ -134,11 +153,9 @@ Avoid repeating the same reply; adapt your response to the specific details of t
       }
     }
 
-    // 統計を直接 Redis に記録（fire-and-forget）
-    const lang = (language || 'ja') as string
-    const validLangs: LanguageKey[] = ['ja', 'en', 'zh-TW', 'zh-HK', 'es', 'ko', 'fr', 'th']
-    const statsLang: LanguageKey = validLangs.includes(lang as LanguageKey) ? lang as LanguageKey : 'en'
-    incrementServerStats({ category: category as CategoryKey, language: statsLang }).catch(() => {})
+    // サーバーサイドで統計を記録（LINE/Telegram と一元管理）
+    const lang = normalizeLanguage(language)
+    incrementServerStats({ category: category as CategoryKey, language: lang }).catch(() => {})
 
     return NextResponse.json({ reply, categoryLabel: CATEGORY_LABELS[category] })
   } catch (error) {
