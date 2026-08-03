@@ -35,6 +35,13 @@ async function generateReply(userMessage: string): Promise<{ reply: string; cate
   if (!apiKey) return { reply: userMessage, category: 'inquiry' }
 
   const category = classifyMessage(userMessage)
+  const today = new Date().toLocaleDateString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  })
 
   try {
     const anthropic = new Anthropic({ apiKey })
@@ -45,6 +52,10 @@ async function generateReply(userMessage: string): Promise<{ reply: string; cate
 
 ${GACKT_KNOWLEDGE}
 
+今日の日付（JST）: ${today}
+
+- 「次のライブ」「今後の公演」「これからのライブ」を聞かれた場合は、今日（${today}）以降の公演のみ案内する。今日より前の公演は絶対に案内しない。
+- 指摘・訂正を受けたら具体的に認めて感謝し、同じ返信内で正しい情報を出す（一般的な謝罪だけで終わらせない）。
 - 回答はプレーンテキストのみ。Markdownは使わない。
 - 知らないことは「gackt.com でご確認ください」と案内する。
 - クレームや不満には、まず謝罪し、具体的な解決策を提示してください。`,
