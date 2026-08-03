@@ -20,8 +20,8 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "GACKT AI多言語チャットボット窓口",
-  description: "GACKT AI多言語チャットボット窓口",
+  title: "GACKT AI Chat",
+  description: "GACKT OFFICIAL AI チャットサポート",
 };
 
 export default function RootLayout({
