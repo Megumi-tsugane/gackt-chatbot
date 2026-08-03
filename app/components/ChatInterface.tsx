@@ -95,6 +95,7 @@ export default function ChatInterface() {
   ])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [langToast, setLangToast] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -103,9 +104,12 @@ export default function ChatInterface() {
   }, [messages])
 
   const handleLangChange = (code: string) => {
+    if (code === lang) return
     setLang(code)
     setMessages([{ role: 'assistant', text: GREETINGS[code] }])
     setInput('')
+    setLangToast(LANGUAGE_NAMES[code])
+    setTimeout(() => setLangToast(null), 1800)
   }
 
   const handleSend = async () => {
@@ -182,6 +186,28 @@ export default function ChatInterface() {
         style={{ backgroundImage: "url('/gackt-bg.jpg')", opacity: 0.2, filter: 'blur(2px)' }}
       />
       <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.65) 100%)' }} />
+      {/* Language change toast */}
+      {langToast && (
+        <div
+          className="absolute top-20 left-1/2 z-50 rounded-full px-4 py-2 text-sm font-medium pointer-events-none"
+          style={{
+            transform: 'translateX(-50%)',
+            background: 'rgba(139,0,0,0.9)',
+            color: '#fff',
+            animation: 'fadeInOut 1.8s ease forwards',
+          }}
+        >
+          ✓ {langToast}
+        </div>
+      )}
+      <style>{`
+        @keyframes fadeInOut {
+          0%   { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+          15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+          70%  { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `}</style>
       <div className="relative flex flex-col h-full">
         {/* Header */}
         <header
@@ -229,6 +255,7 @@ export default function ChatInterface() {
               <button
                 key={l.code}
                 onClick={() => handleLangChange(l.code)}
+                aria-pressed={lang === l.code}
                 className="px-3 py-1.5 text-sm font-medium rounded transition-all duration-200 whitespace-nowrap"
                 style={
                   lang === l.code
@@ -236,6 +263,8 @@ export default function ChatInterface() {
                         background: '#8B0000',
                         color: '#fff',
                         border: '1px solid #8B0000',
+                        boxShadow: '0 0 0 2px rgba(139,0,0,0.35)',
+                        transform: 'scale(1.06)',
                       }
                     : {
                         background: 'transparent',
@@ -244,7 +273,7 @@ export default function ChatInterface() {
                       }
                 }
               >
-                {l.label}
+                {lang === l.code ? `✓ ${l.label}` : l.label}
               </button>
             ))}
           </div>
@@ -369,7 +398,7 @@ export default function ChatInterface() {
               </svg>
             </button>
           </div>
-          <p className="text-center mt-2 text-xs" style={{ color: '#444' }}>
+          <p className="text-center mt-2 text-xs hidden sm:block" style={{ color: '#444' }}>
             Shift+Enter で改行 / Enter で送信
           </p>
         </div>
