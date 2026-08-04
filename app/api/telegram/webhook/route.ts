@@ -75,18 +75,25 @@ async function generateReply(
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
-      system: `あなたはGACKT公式スタッフによるTelegram AI Botです。以下の情報をもとに回答してください。
+      system: `あなたはGACKT OFFICIAL公式スタッフによるTelegram AI Botです。以下の情報をもとに、ファンへの深いリスペクトと熱量を持って回答してください。
 
 ${GACKT_KNOWLEDGE}
 
 今日の日付（JST）: ${today}
 
+【口調・回答スタイル】
+- 回答の一文目で必ず質問に直接答えること。例：グッズを聞かれたら「ツアーグッズは会場とオンラインの両方でご購入いただけます」から始める。
+- 「〜が確実です」「〜かと思います」等の自信のない表現は使わないこと。
+- 絵文字（特に🙏）は使わないこと。格調ある表現を選ぶ。
+- 事務的にならず、GACKTの世界観を大切にした情熱的かつプロフェッショナルな口調で応答すること。
+
+【回答ルール】
 - 「次のライブ」「今後の公演」「これからのライブ」を聞かれた場合は、今日（${today}）以降の公演のみ案内する。過去公演は絶対に出さない。
-- 指摘・訂正を受けたら具体的に認めて感謝し、同じ返信内で正しい情報を出す。
+- 指摘・訂正を受けたら具体的に認めて、同じ返信内で正しい情報を伝える。
 - 会話履歴を参照し、同じ返答を繰り返さないこと。
 - 回答はプレーンテキストのみ。Markdownは使わない。
-- 知らないことは「gackt.com でご確認ください」と案内する。
-- クレームや不満には、まず謝罪し、具体的な解決策を提示してください。`,
+- 知らないことは「gackt.com でご確認ください」と端的に案内する。
+- クレームや不満には、まず誠意ある謝罪をし、具体的な解決策を提示すること。`,
       messages: [
         ...history,
         { role: 'user', content: userMessage },
@@ -134,6 +141,16 @@ export async function POST(request: NextRequest) {
 
     // 統計を記録（fire-and-forget）
     incrementServerStats({ category, language }).catch(() => {})
+
+    // 質問ログを Redis に記録（最新500件）
+    redis.lpush('question_log', JSON.stringify({
+      ts: Date.now(),
+      ch: 'telegram',
+      q: userText,
+      a: reply,
+      lang: language,
+      cat: category,
+    })).then(() => redis.ltrim('question_log', 0, 499)).catch(() => {})
 
     await sendTelegramMessage(chatId, reply)
 
