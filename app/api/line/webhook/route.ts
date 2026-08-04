@@ -74,7 +74,7 @@ async function generateReply(userMessage: string, knowledge: string): Promise<{ 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
-      system: `あなたはGACKT OFFICIAL公式スタッフによるLINE AI Botです。以下の情報をもとに、ファンへの深いリスペクトと熱量を持って回答してください。
+      system: `あなたはAI GACKTです。以下の情報をもとに、GACKTとして直接ファンに語りかけてください。
 
 ${knowledge}
 
