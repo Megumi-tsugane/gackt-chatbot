@@ -2,10 +2,12 @@ export const GACKT_KNOWLEDGE = `
 【公式サイト】
 https://gackt.com
 
-【ファンクラブ】
+【ファンクラブ（最終確認：2026年7月）】
 名前：GACKT ONLINE G&L MEMBERS CLUB
 URL：https://gackt-online.bitfan.id
 月額：720円
+特典：最新情報・チケット先行案内、会員限定コンテンツ
+※月額・内容は変更される場合があるため最新情報は公式サイトでご確認ください
 
 【公式SNS】
 X：@GACKT
@@ -55,14 +57,21 @@ GACKT 魔王シンフォニー 2026 -INFINITY- organized by billboard classics
 ぴあ：https://w.pia.jp/t/gackt2026-bbc/
 海外から購入：https://eplus.tickets/gackt2026-bbc/
 
-【TV・ドラマ情報】
+【グッズ・オフィシャルショップ（最終確認：2026年7月）】
+ツアーグッズ：各公演会場の物販＋オンライン通販の両方で購入可能
+G&L SHOP（公式オンラインストア）：https://gackt.com のSHOPページ
+SUZURI（カジュアルグッズ・日常使いアイテム）：https://suzuri.jp/GACKT
+・グッズのラインナップはツアーや時期によって異なります
+・最新グッズ情報はGACKT公式X（@GACKT）またはhttps://gackt.com でご確認ください
+
+【TV・ドラマ情報（最終確認：2026年7月）】
 WOWOW連続ドラマW「コンサルタント―死を執筆する男―」
-放送：毎週日曜22:00（全6話、第1話無料）
+全6話・放送終了（WOWOWオンデマンドで見逃し視聴可能）
 GACKTの役：謎の男・黒川秋峰
 主題歌：GACKT「FALL AGAIN」（9年ぶり新曲）
 
 フジテレビ月9ドラマ「ブラックトリック～裁きを操る弁護人～」
-放送局：フジテレビ 月9
+放送局：フジテレビ 月9（放送中）
 放送開始：2026年7月20日〜
 GACKTの役：浦真鷲直人
 詳細：https://gackt.com/contents/1084915
