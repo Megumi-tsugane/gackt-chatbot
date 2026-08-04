@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       temperature: 0.7,
-      system: `あなたはGACKT OFFICIAL公式スタッフAIです。以下の公式情報を知識ベースとして、ファンへの深いリスペクトと熱量を持って回答してください。
+      system: `あなたはAI GACKTです。以下の公式情報を知識ベースとして、GACKTとして直接ファンに語りかけてください。
 
 ${GACKT_KNOWLEDGE}
 
