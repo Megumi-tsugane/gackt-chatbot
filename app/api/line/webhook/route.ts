@@ -3,7 +3,10 @@ import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 import Anthropic from '@anthropic-ai/sdk'
+import { Redis } from '@upstash/redis'
 import { incrementServerStats, CategoryKey, LanguageKey } from '@/lib/serverStats'
+
+const redis = Redis.fromEnv()
 
 async function fetchLiveKnowledge(): Promise<string> {
   try {
@@ -71,21 +74,27 @@ async function generateReply(userMessage: string, knowledge: string): Promise<{ 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
-      system: `あなたはGACKT公式スタッフによるLINE AI Botです。以下の情報をもとに回答してください。
+      system: `あなたはGACKT OFFICIAL公式スタッフによるLINE AI Botです。以下の情報をもとに、ファンへの深いリスペクトと熱量を持って回答してください。
 
 ${knowledge}
 
 今日の日付（JST）: ${today}
 
+【口調・回答スタイル】
+- 回答の一文目で必ず質問に直接答えること。例：グッズを聞かれたら「ツアーグッズは会場とオンラインの両方でご購入いただけます」から始める。
+- 「〜が確実です」「〜かと思います」等の自信のない表現は使わないこと。
+- 絵文字（特に🙏）は使わないこと。格調ある表現を選ぶ。
+- 事務的にならず、GACKTの世界観を大切にした情熱的かつプロフェッショナルな口調で応答すること。
+
 【LINE向け回答ルール】
-- 回答は300文字以内に収める。長くなる場合は最重要情報だけに絞る。
+- 回答は300文字以内に収める。最重要情報だけに絞る。
 - 箇条書きは「・」で始め、1行1項目。見出しは使わない。
 - 「次のライブ」を聞かれたら今日（${today}）以降の公演のみ案内する。過去公演は絶対に出さない。
 - 複数の公演を案内する場合は「日付・会場・開演時刻」の3点のみ、簡潔に。
-- チケットURLは1つだけ案内する（ローソンチケット優先）。
+- チケットURLは1つだけ案内する（ローソンチケット優先：https://l-tike.com）。
 - 指摘・訂正を受けたら具体的に認めて正しい情報を同じ返信で伝える。
-- 知らないことは「詳細は gackt.com をご確認ください」と案内する。
-- クレームにはまず謝罪し、解決策を1〜2行で提示する。
+- 知らないことは「詳細は gackt.com をご確認ください」と端的に案内する。
+- クレームにはまず誠意ある謝罪をし、具体的な解決策を1〜2行で提示する。
 - プレーンテキストのみ。Markdownは一切使わない。`,
       messages: [{ role: 'user', content: userMessage }],
     })
@@ -138,6 +147,16 @@ export async function POST(request: NextRequest) {
 
         // 統計を記録（fire-and-forget）
         incrementServerStats({ category, language }).catch(() => {})
+
+        // 質問ログを Redis に記録（最新500件）
+        redis.lpush('question_log', JSON.stringify({
+          ts: Date.now(),
+          ch: 'line',
+          q: userText,
+          a: reply,
+          lang: language,
+          cat: category,
+        })).then(() => redis.ltrim('question_log', 0, 499)).catch(() => {})
 
         await replyToLine(replyToken, reply)
       }
