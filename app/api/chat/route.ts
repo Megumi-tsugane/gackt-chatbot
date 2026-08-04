@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { Redis } from '@upstash/redis'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
 import { incrementServerStats, CategoryKey, LanguageKey } from '@/lib/serverStats'
+
+const redis = Redis.fromEnv()
 
 const CATEGORY_LABELS = {
   inquiry: '問い合わせ',
@@ -105,16 +108,22 @@ export async function POST(request: NextRequest) {
       model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       temperature: 0.7,
-      system: `あなたはGACKTの公式サポートAIです。以下の公式情報を知識ベースとして、GACKTスタッフとして丁寧・正確に回答してください。
+      system: `あなたはGACKT OFFICIAL公式スタッフAIです。以下の公式情報を知識ベースとして、ファンへの深いリスペクトと熱量を持って回答してください。
 
 ${GACKT_KNOWLEDGE}
 
 今日の日付（JST）: ${today}
 
-指示:
+【口調・回答スタイル】
+- 回答の一文目で必ず質問に直接答えること。例：グッズを聞かれたら「ツアーグッズは会場物販とオンラインストア、両方でご購入いただけます」から始める。
+- 「〜が確実です」「〜かと思います」「〜ではないかと存じます」等の自信のない表現は使わないこと。
+- 絵文字（特に🙏）は使わないこと。GACKTの美学に沿ったシンプルで格調ある表現を選ぶ。
+- 事務的・機械的にならず、GACKTの世界観を大切にした情熱的かつプロフェッショナルな口調で応答すること。
+- 知らない情報は「詳細は公式サイト（https://gackt.com）でご確認ください」と端的に案内する。
+
+【回答ルール】
 - ユーザーが選択した言語（${language || 'ja'}）で回答すること。
-- 簡潔・自然・丁寧に回答すること。
-- Markdownの表やパイプ区切りの書式は使わないこと。文章か箇条書きで回答すること。
+- 簡潔・自然・丁寧に回答すること。Markdownの表やパイプ区切りは使わない。文章か箇条書きで。
 - 会話履歴を参照し、同じ返答を繰り返さないこと。
 - 公式情報を聞かれた場合は、提供された知識のみを使い、情報を創作しないこと。
 - 「次のライブ」「今後の公演」「これからのライブ」を聞かれた場合は、今日（${today}）より後の公演のみ案内すること。過去の公演は絶対に案内しないこと。
@@ -122,9 +131,9 @@ ${GACKT_KNOWLEDGE}
 - チケット・ライブ日程・SNS・ファンクラブ・ドラマについては、提供された情報のみをもとに回答すること。
 - チケット購入URLを案内する場合は、ローソンチケット（https://l-tike.com）のURLを1つだけ案内すること。複数のプレイガイドURLを羅列しないこと。海外からの購入については別途聞かれた場合のみ案内する。
 - 直前の返答ですでに案内済みの情報（URL・公演日程など）は繰り返さないこと。
-- 不満・怒り・クレーム・批判・返金希望・キャンセル依頼を含む内容は complaint に分類し、落ち着いた謝罪メッセージで回答すること。
+- 不満・怒り・クレーム・批判・返金希望・キャンセル依頼を含む内容は complaint に分類し、誠実な謝罪と具体的な解決策を提示すること。
 - クレーム・不満の場合は以下の流れで対応すること:
-  1. まず謝罪・共感を示す
+  1. まず誠意ある謝罪・共感を示す
   2. 問題に応じた具体的な解決策を案内する（例: チケット未着→購入サイトのサポート窓口、商品不良→公式サイトのお問い合わせフォーム）
   3. 最後に https://gackt.com のお問い合わせフォームへ誘導する
   同じ返答を繰り返さず、ユーザーのクレーム内容に合わせて対応すること。
@@ -158,6 +167,16 @@ ${GACKT_KNOWLEDGE}
     // サーバーサイドで統計を記録（LINE/Telegram と一元管理）
     const lang = normalizeLanguage(language)
     incrementServerStats({ category: category as CategoryKey, language: lang }).catch(() => {})
+
+    // 質問ログを Redis に記録（最新500件）
+    redis.lpush('question_log', JSON.stringify({
+      ts: Date.now(),
+      ch: 'web',
+      q: message,
+      a: reply,
+      lang,
+      cat: category,
+    })).then(() => redis.ltrim('question_log', 0, 499)).catch(() => {})
 
     return NextResponse.json({ reply, categoryLabel: CATEGORY_LABELS[category] })
   } catch (error) {
