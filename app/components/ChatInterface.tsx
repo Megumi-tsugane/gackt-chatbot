@@ -18,25 +18,25 @@ const LANGUAGES = [
 ]
 
 const PLACEHOLDERS: Record<string, string> = {
-  ja: 'スタッフへお問い合わせ...',
-  en: 'Send us a message...',
-  'zh-TW': '傳送訊息...',
-  'zh-HK': '発送訊息...',
-  es: 'Enviar un mensaje...',
-  ko: '메시지 보내기...',
-  fr: 'Envoyer un message...',
-  th: 'ส่งข้อความ...',
+  ja: 'AI GACKTへメッセージ...',
+  en: 'Message AI GACKT...',
+  'zh-TW': '傳訊息給 AI GACKT...',
+  'zh-HK': '傳訊息給 AI GACKT...',
+  es: 'Mensaje a AI GACKT...',
+  ko: 'AI GACKT에게 메시지...',
+  fr: 'Message à AI GACKT...',
+  th: 'ส่งข้อความถึง AI GACKT...',
 }
 
 const GREETINGS: Record<string, string> = {
-  ja: 'GACKT OFFICIALスタッフです。チケット・ライブ・最新情報など、お気軽にお問い合わせください。',
-  en: 'Welcome to GACKT OFFICIAL. We are here to assist with tickets, live events, and the latest news.',
-  'zh-TW': '歡迎來到 GACKT OFFICIAL。有關票務、演出及最新資訊，請隨時提問。',
-  'zh-HK': '歡迎來到 GACKT OFFICIAL。有關票務、演出及最新消息，請隨時發問。',
-  es: 'Bienvenido a GACKT OFFICIAL. Estamos aquí para ayudarte con entradas, eventos y últimas noticias.',
-  ko: 'GACKT OFFICIAL 스탭입니다. 티켓・라이브・최신 정보 등 무엇이든 문의해 주세요.',
-  fr: "Bienvenue chez GACKT OFFICIAL. Nous sommes là pour vous aider avec les billets, les événements et les dernières nouvelles.",
-  th: 'ยินดีต้อนรับสู่ GACKT OFFICIAL เราพร้อมช่วยเรื่องบัตร, งานแสดง และข่าวสารล่าสุด',
+  ja: 'AI GACKTだ。チケット・ライブ・最新情報——何でも聞いてくれ。',
+  en: "I'm AI GACKT. Ask me anything about tickets, live events, and the latest news.",
+  'zh-TW': '我是 AI GACKT。票務、演出、最新資訊——什麼都可以問。',
+  'zh-HK': '我係 AI GACKT。票務、演出、最新消息——乜都可以問。',
+  es: 'Soy AI GACKT. Pregúntame lo que quieras sobre entradas, eventos y últimas noticias.',
+  ko: 'AI GACKT다. 티켓・라이브・최신 정보——뭐든지 물어봐.',
+  fr: "Je suis AI GACKT. Pose-moi toutes tes questions sur les billets, les événements et les dernières nouvelles.",
+  th: 'ฉันคือ AI GACKT ถามเรื่องบัตร งานแสดง หรือข่าวสารล่าสุดได้เลย',
 }
 
 const CATEGORY_LABELS: Record<string, Record<string, string>> = {
@@ -227,7 +227,7 @@ export default function ChatInterface() {
               className="text-xs tracking-widest uppercase"
               style={{ color: '#666', letterSpacing: '0.15em' }}
             >
-              AI Chat
+              AI GACKT
             </span>
           </div>
           <div className="flex items-center gap-3">
