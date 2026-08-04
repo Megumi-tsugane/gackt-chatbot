@@ -21,6 +21,7 @@ BeReal：@gackt
 生年月日：1973年7月4日
 出身：沖縄県
 職業：ミュージシャン、俳優、タレント
+ソロデビューシングル：「MIZERABLE」（1999年1月21日リリース）
 代表曲：REDEMPTION、Vanilla、Last Song、Jesus、君が追いかけた夢、episode.0、U+K、Lust for Blood、FALL AGAIN（2026年・9年ぶり新曲）
 
 【ライフスタイル・健康哲学】
