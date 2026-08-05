@@ -72,6 +72,7 @@ SUZURI（カジュアルグッズ・日常使いアイテム）：https://suzuri
 放送局：フジテレビ 月9
 放送開始：2026年7月20日〜（放送中）
 GACKTの役：浦真鷲直人
+見逃し配信：TVerで視聴可能 https://tver.jp/series/srwydkdkol
 詳細：https://gackt.com/contents/1084915
 
 ▼放送終了・配信中
