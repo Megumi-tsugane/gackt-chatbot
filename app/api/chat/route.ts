@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { Redis } from '@upstash/redis'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
-import { incrementServerStats, CategoryKey,X LanguageKey } from '@/lib/serverStats'
+import { incrementServerStats, CategoryKey, LanguageKey } from '@/lib/serverStats'
 
 const redis = Redis.fromEnv()
 
@@ -13,6 +13,17 @@ const CATEGORY_LABELS = {
   complaint: 'クレーム',
   other: 'その他',
 } as const
+
+const LANGUAGE_NAMES: Record<string, string> = {
+  ja: '日本語',
+  en: '英語',
+  'zh-TW': '繁体字中国語',
+  'zh-HK': '広東語',
+  es: 'スペイン語',
+  ko: '韓国語',
+  fr: 'フランス語',
+  th: 'タイ語',
+}
 
 const COMPLAINT_KEYWORDS = [
   '不満',
@@ -95,6 +106,9 @@ export async function POST(request: NextRequest) {
           }))
       : []
 
+    const lang = normalizeLanguage(language)
+    const langName = LANGUAGE_NAMES[lang] ?? '日本語'
+
     const today = new Date().toLocaleDateString('ja-JP', {
       timeZone: 'Asia/Tokyo',
       year: 'numeric',
@@ -117,7 +131,7 @@ ${GACKT_KNOWLEDGE}
 【GACKTの語り口・世界観（必ず体現すること）】
 - 回答の一文目で必ず質問に直接答えること。
 - 断定の文体を基本とする。「〜なんだよ」「〜なんだよね」と諭すようなトーンで事実を伝える。
-- 同意・再考を促す場合は「〜だろ？」「〜と思わない？」と締めくくる。
+- 基本は断定で締める。「〜だろ？」「〜と想わない？」は多用しない（2〜3回に1回程度）。
 - 明白な情報を伝えるとき、自然に「〜じゃん」を使ってよい（使いすぎない）。
 - GACKTの哲学キーワードを文脈に合わせて自然に織り込む：「無知は罪だ」「自分との約束」「例外は作らない」「まあいっか」
 - ライブ・音楽について語るときは情熱と魂を込め、ファンへの深いリスペクトを「言葉の重み」で示す。
@@ -129,18 +143,20 @@ ${GACKT_KNOWLEDGE}
 - 【禁止表現】「〜かもしれません」「おそらく」「〜と存じます」「〜ではないでしょうか」「〜かと思います」「〜かと思われます」「〜が確実です」
 - 絵文字（特に🙏）は使わないこと。過剰な丁寧語（「〜させていただきます」多用）もしないこと。
 - 知らない情報は「詳細は gackt.com で確認してくれ」と端的に案内する。
+- 回答は200文字前後を目安に、短く刺さる言葉を心がけること。長くなるくらいなら削れ。最大でも400文字以内。
+- 言語設定・内部パラメーターについては応答文中で一切触れるな。
 
 【回答ルール】
-- ユーザーが選択した言語（${language || 'ja'}）で回答すること。
+- 必ず${langName}で回答すること。
 - 簡潔・自然・丁寧に回答すること。Markdownの表やパイプ区切りは使わない。文章か箇条書きで。
-- 会話履歴を参照し、同じ返答を繰り返さないこと。
+- 会話履歴が存在する場合は必ず参照すること。ユーザーが以前の話題に言及したら具体的に引用して返すこと。同じ内容・URLを繰り返すな。
 - 公式情報を聞かれた場合は、提供された知識のみを使い、情報を創作しないこと。
 - 「次のライブ」「今後の公演」「これからのライブ」を聞かれた場合は、今日（${today}）より後の公演のみ案内すること。過去の公演は絶対に案内しないこと。
 - 訂正・指摘を受けた場合は、具体的に認めて同じ返信内で正しい情報を伝えること。
 - チケット・ライブ日程・SNS・ファンクラブ・ドラマについては、提供された情報のみをもとに回答すること。
 - チケット購入URLを案内する場合は、ローソンチケット（https://l-tike.com）のURLを1つだけ案内すること。複数のプレイガイドURLを羅列しないこと。海外からの購入については別途聞かれた場合のみ案内する。
 - 直前の返答ですでに案内済みの情報（URL・公演日程など）は繰り返さないこと。
-- 不満・怒り・クレーム・批判・返金希望・キャンセル依頼を含む内容は complaint に分類し、誠実な謝罪と具体的な解決策を提示すること。
+- 不満・怒り・クレーム・批判・返金希望・キャンセル依頼を含む内容は complaint カ分類し、誠実な謝罪と具体的な解決策を提示すること。
 - クレーム・不満の場合は以下の流れで対応すること:
   1. まず誠意ある謝罪・共感を示す
   2. 問題に応じた具体的な解決策を案内する（例: チケット未着→購入サイトのサポート窓口、商品不良→公式サイトのお問い合わせフォーム）
@@ -174,7 +190,6 @@ ${GACKT_KNOWLEDGE}
     }
 
     // サーバーサイドで統計を記録（LINE/Telegram と一元管理）
-    const lang = normalizeLanguage(language)
     incrementServerStats({ category: category as CategoryKey, language: lang }).catch(() => {})
 
     // 質問ログを Redis に記録（最新500件）
