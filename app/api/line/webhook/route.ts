@@ -56,7 +56,26 @@ function detectLanguage(text: string): LanguageKey {
   return 'en'
 }
 
-async function generateReply(userMessage: string, knowledge: string): Promise<{ reply: string; category: CategoryKey }> {
+type HistoryItem = { role: 'user' | 'assistant'; content: string }
+
+async function getHistory(userId: string): Promise<HistoryItem[]> {
+  try {
+    const data = await redis.get<HistoryItem[]>(`line:hist:${userId}`)
+    return Array.isArray(data) ? data : []
+  } catch {
+    return []
+  }
+}
+
+async function saveHistory(userId: string, history: HistoryItem[]): Promise<void> {
+  try {
+    await redis.set(`line:hist:${userId}`, history.slice(-6), { ex: 3600 })
+  } catch {
+    // 保存失敗は無視
+  }
+}
+
+async function generateReply(userMessage: string, knowledge: string, history: HistoryItem[]): Promise<{ reply: string; category: CategoryKey }> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return { reply: userMessage, category: 'inquiry' }
 
@@ -83,24 +102,25 @@ ${knowledge}
 【GACKTの語り口・世界観（必ず体現すること）】
 - 回答の一文目で必ず質問に直接答えること。
 - 断定の文体を基本とする。「〜なんだよ」「〜なんだよね」と諭すトーンで事実を伝える。
-- 同意・再考を促す場合は「〜だろ？」「〜と思わない？」と締めくくる。明白な情報は「〜じゃん」でよい。
+- 基本は断定で締める。「〜だろ？」「〜と想わない？」は多用しない（2〜3回に1回程度）。明白な情報は「〜じゃん」でよい。
 - GACKTの哲学キーワードを自然に織り込む：「無知は罪だ」「自分との約束」「例外は作らない」。
 - 驚き・称賛を表すなら「えぐい」「えげつない」を使ってよい。
 - 【表記ルール（必ず守ること）】自分のことは「ボク」、相手は「オマエ」、「思う」は「想う」と書くこと。
-- 【禁止表現】「〜かもしれません」「おそらく」「〜と存じます」「〜ではないでしょうか」「〜かと思います」「〜が確実です」
+- 【禁止表現】「〜かもしれません」「えそらく」「〜と存じます」「〜ではないでしょうか」「〜かと思います」「〜が確実です」
 - 絵文字（特に🙏）、過剰な丁寧語は使わないこと。
 
 【LINE向け回答ルール】
-- 回答は300文字以内に収める。最重要情報だけに絞る。
+- 回答は200文字前後を目安に、短く刺さる言葉を心がけること。最大300文字以内。
+- 会話履歴が存在する場合は必ず参照すること。ユーザーが以前の話題に言及したら具体的に認めて正しい情報を同じ返信で伝える。
 - 箇条書きは「・」で始め、1行1項目。見出しは使わない。
-- 「次のライブ」を聞かれたら今日（${today}）以降の公演のみ案内する。過去公演は絶対に出さない。
-- 複数の公演を案内する場合は「日付・会場・開演時刻」の3点のみ、簡潔に。
+- 「次のライブ」を聞かれたよ今日（${today}）以降の公演のみ案内する。過去公演は絶対に出さない。
+- 複数の公演を案内する場合は「日付・会場・開演時刻」の3点きみ、簡潔に。
 - チケットURLは1つだけ案内する（ローソンチケット優先：https://l-tike.com）。
 - 指摘・訂正を受けたら具体的に認めて正しい情報を同じ返信で伝える。
 - 知らないことは「詳細は gackt.com で確認してくれ」と端的に案内する。
 - クレームにはまず誠意ある謝罪をし、具体的な解決策を1〜2行で提示する。
 - プレーンテキストのみ。Markdownは一切使わない。`,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [...history, { role: 'user', content: userMessage }],
     })
     const reply = response.content.map(c => ('text' in c ? c.text : '')).join('')
     return { reply, category }
@@ -135,6 +155,7 @@ export async function POST(request: NextRequest) {
       events: Array<{
         type: string
         replyToken: string
+        source?: { userId?: string }
         message?: { type: string; text: string }
       }>
     }
@@ -145,9 +166,19 @@ export async function POST(request: NextRequest) {
       if (event.type === 'message' && event.message?.type === 'text') {
         const userText = event.message.text
         const replyToken = event.replyToken
+        const userId = event.source?.userId ?? replyToken
 
-        const { reply, category } = await generateReply(userText, knowledge)
+        const history = await getHistory(userId)
+        const { reply, category } = await generateReply(userText, knowledge, history)
         const language = detectLanguage(userText)
+
+        // 履歴を更新して保存
+        const updatedHistory: HistoryItem[] = [
+          ...history,
+          { role: 'user', content: userText },
+          { role: 'assistant', content: reply },
+        ]
+        await saveHistory(userId, updatedHistory)
 
         // 統計を記録（fire-and-forget）
         incrementServerStats({ category, language }).catch(() => {})
