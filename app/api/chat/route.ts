@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { Redis } from '@upstash/redis'
 import { GACKT_KNOWLEDGE } from '@/lib/knowledge'
-import { incrementServerStats, CategoryKey, LanguageKey } from '@/lib/serverStats'
+import { incrementServerStats, CategoryKey,X LanguageKey } from '@/lib/serverStats'
 
 const redis = Redis.fromEnv()
 
